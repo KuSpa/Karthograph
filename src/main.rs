@@ -228,7 +228,7 @@ impl Default for Tile {
         let geometry = vec![(1, 0), (0, 1), (0, 0)];
         Self {
             geometry,
-            cultivation: Cultivation::Farm,
+            cultivation: Cultivation::Village,
             orientation: Orientation::Up,
         }
     }
@@ -278,11 +278,15 @@ fn init_camera(mut com: Commands) {
     com.spawn_bundle(bundle);
 }
 
-const ASSETS: [(&'static str, &'static str); 4] = [
+const ASSETS: [(&'static str, &'static str); 8] = [
     ("mountain", "mountain.png"),
     ("ruin", "ruin.png"),
     ("default", "default.png"),
     ("farm", "farm.png"),
+    ("forest", "forest.png"),
+    ("goblin", "goblin,png"),
+    ("river", "river.png"),
+    ("village", "village.png")
 ];
 
 #[derive(Default)]
@@ -340,7 +344,7 @@ fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
         }
     }
 
-    Tile::spawn(&mut com, Tile::default(), assets.fetch("farm").unwrap());
+    Tile::spawn(&mut com, Tile::default(), assets.fetch("village").unwrap());
 
     com.insert_resource(grid);
 }
