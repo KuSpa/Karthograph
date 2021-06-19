@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::time::Duration;
 use std::usize;
 
-use bevy::asset::AssetPath;
+use bevy::core::Timer;
 use bevy::input::mouse::MouseButtonInput;
 use bevy::prelude::*;
 use bevy::render::camera::WindowOrigin;
@@ -28,7 +29,28 @@ fn main() {
         .add_startup_system(init_grid.system())
         .add_system(move_tiles.system())
         .add_system(place_tile.system())
+        .add_system(spawn_tile.system().config(|params| params.2 =Some(Timer::new(Duration::from_secs_f32(0.5), false)) ))
         .run();
+}
+
+fn spawn_tile(
+    mut com: Commands,
+    query:Query<&Tile>,
+    mut timer:Local<Timer>,
+    time:ResMut<Time>,
+    assets:Res<AssetManager>
+){
+    timer.tick(time.delta());
+
+    if  query.iter().len() == 0 {
+        if timer.just_finished() {
+            let tile = Tile::default();
+            Tile::spawn(&mut com, Tile::default(), assets.fetch(tile.cultivation.into()).unwrap());
+        } else if timer.finished(){
+            timer.reset();
+        }
+    }
+
 }
 
 fn place_tile(
@@ -165,8 +187,8 @@ struct Tile {
 }
 
 impl Tile {
-    fn spawn(com: &mut Commands, tile: Self, handle: Handle<ColorMaterial>) -> Entity {
-        //TODO ASSETMANAGEMENT
+    // TODO make this non static
+    fn spawn(com: &mut Commands, tile: Self, handle: Handle<ColorMaterial>) -> Entity {//TODO PROPER TEXTURE
         let mut children = Vec::<Entity>::new();
         let mat = handle;
 
@@ -186,6 +208,8 @@ impl Tile {
                 .id();
             children.push(child);
         }
+        // TODO: spawn with transform?????? 
+        // FIXME: if no new mouse event triggers, transform is not set...
         com.spawn()
             .insert(tile)
             .insert(GlobalTransform::default())
@@ -344,8 +368,6 @@ fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
         }
     }
 
-    Tile::spawn(&mut com, Tile::default(), assets.fetch("village").unwrap());
-
     com.insert_resource(grid);
 }
 
@@ -370,3 +392,4 @@ fn move_tiles(
         }
     }
 }
+
