@@ -1,33 +1,77 @@
+use std::ops::{Deref, DerefMut};
+
 use crate::asset_management::AssetManager;
 use crate::grid::{Coordinate, Cultivation, FieldComponent, Grid};
 use crate::SPRITE_SIZE;
-use bevy::core::Timer;
 use bevy::input::mouse::{MouseButtonInput, MouseWheel};
 use bevy::prelude::*;
 //TODO MIRROR
+
+#[derive(Clone)]
+pub struct Geometry {
+    // TODO should this know the size its drawn??
+    pub inner: Vec<Coordinate>,
+}
+impl Geometry {
+    pub fn rotate_clockwise(&mut self) {
+        for position in self.iter_mut() {
+            *position = position.perp().perp().perp();
+        }
+    }
+
+    pub fn rotate_counter_clockwise(&mut self) {
+        for position in self.iter_mut() {
+            *position = position.perp();
+        }
+    }
+
+    pub fn as_transform(&self, distance: f32, z: f32) -> Vec<Transform> {
+        self.iter()
+            .map(|pos| Transform::from_xyz(distance * pos.x as f32, distance * pos.y as f32, z))
+            .collect()
+    }
+}
+
+impl Deref for Geometry {
+    type Target = Vec<Coordinate>;
+    fn deref(&self) -> &Self::Target {
+        return &self.inner;
+    }
+}
+
+impl DerefMut for Geometry {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        return &mut self.inner;
+    }
+}
 pub struct Shape {
-    geometry: Vec<Coordinate>,
+    geometry: Geometry,
     cultivation: Cultivation,
 }
 
 impl Shape {
+    pub fn new(g: &Geometry, cult: &Cultivation) -> Self {
+        Self {
+            geometry: g.clone(),
+            cultivation: cult.clone(),
+        }
+    }
+
     // TODO make this non static
-    fn spawn(self, com: &mut Commands, handle: Handle<ColorMaterial>) -> Entity {
+    pub fn spawn(self, com: &mut Commands, assets: &Res<AssetManager>) -> Entity {
         //TODO PROPER TEXTURE
+        let handle = assets.fetch(self.cultivation.into()).unwrap();
+
         let mut children = Vec::<Entity>::new();
         let mat = handle;
 
-        for &position in self.geometry.iter() {
+        for &transform in self.geometry.as_transform(SPRITE_SIZE, 0.).iter() {
             let child = com
                 .spawn()
                 .insert_bundle(SpriteBundle {
                     sprite: Sprite::new(Vec2::new(SPRITE_SIZE, SPRITE_SIZE)),
                     material: mat.clone(),
-                    transform: Transform::from_xyz(
-                        position.x as f32 * SPRITE_SIZE,
-                        position.y as f32 * SPRITE_SIZE,
-                        0.,
-                    ),
+                    transform,
                     ..Default::default()
                 })
                 .id();
@@ -51,9 +95,7 @@ impl Shape {
             transform.translation.x = y;
             transform.translation.y = -x;
         }
-        for position in self.geometry.iter_mut(){
-            *position = position.perp().perp().perp();
-        }
+        self.geometry.rotate_clockwise();
     }
 
     // POSSIBLE BREAK -> CALLER DETERMINES WHAT TRANSFORMS TO ROTATE
@@ -64,14 +106,12 @@ impl Shape {
             transform.translation.x = -y;
             transform.translation.y = x;
         }
-        for position in self.geometry.iter_mut(){
-            *position = position.perp();
-        }
+        self.geometry.rotate_counter_clockwise();
     }
 
     fn is_placable(&self, grid: &Grid, coord: &Coordinate) -> bool {
         for &pos in self.geometry.iter() {
-            if !grid.is_free(&(pos+*coord)) {
+            if !grid.is_free(&(pos + *coord)) {
                 return false;
             }
         }
@@ -90,14 +130,16 @@ impl Shape {
         Ok(self
             .geometry
             .iter()
-            .map(|&pos| grid.cultivate(&(pos+*position), &self.cultivation))
+            .map(|&pos| grid.cultivate(&(pos + *position), &self.cultivation))
             .collect())
     }
 }
 
 impl Default for Shape {
     fn default() -> Self {
-        let geometry = vec![IVec2::new(1, 0), IVec2::new(0, 1), IVec2::new(0, 0)];
+        let geometry = Geometry {
+            inner: vec![IVec2::new(1, 0), IVec2::new(0, 1), IVec2::new(0, 0)],
+        };
         Self {
             geometry,
             cultivation: Cultivation::Village,
@@ -110,7 +152,7 @@ pub fn move_shape(
     mut query: Query<(&Shape, &mut Transform)>,
     grid: Res<Grid>,
 ) {
-    // we are sure, that there is only one shape active
+    // BREAKS IF TWO SHAPES ARE ACTIVE
     if let Ok((shape, mut transform)) = query.single_mut() {
         for event in cursor.iter() {
             //calculate the closest cell
@@ -146,26 +188,6 @@ pub fn rotate_shape(
             } else {
                 shape.rotate_counter_clockwise(&mut transforms);
             }
-        }
-    }
-}
-
-// TODO THIS SHOULD BE REMOVED AS CARDS WILL SPAWN THEM LATER ON
-pub fn spawn_shape(
-    mut com: Commands,
-    query: Query<&Shape>,
-    mut timer: Local<Timer>,
-    time: ResMut<Time>,
-    assets: Res<AssetManager>,
-) {
-    timer.tick(time.delta());
-
-    if query.iter().len() == 0 {
-        if timer.just_finished() {
-            let shape = Shape::default();
-            Shape::default().spawn(&mut com, assets.fetch(shape.cultivation.into()).unwrap());
-        } else if timer.finished() {
-            timer.reset();
         }
     }
 }

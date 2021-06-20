@@ -1,7 +1,7 @@
-use std::usize;
-use bevy::prelude::*;
 use crate::asset_management::AssetManager;
 use crate::util::to_array;
+use bevy::prelude::*;
+use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
 const GRID_SIZE: i32 = 11;
@@ -93,16 +93,18 @@ impl Grid {
     }
 
     pub fn is_free(&self, coord: &Coordinate) -> bool {
-		if coord.x >= GRID_SIZE || coord.y >= GRID_SIZE || coord.x < 0 || coord.y < 0{
-			return false;
-		}
+        if coord.x >= GRID_SIZE || coord.y >= GRID_SIZE || coord.x < 0 || coord.y < 0 {
+            return false;
+        }
         let ref field = self.inner[coord.x as usize][coord.y as usize];
         field.terrain != Terrain::Mountain && field.cultivation.is_none()
     }
 
     pub fn cultivate(&mut self, coord: &Coordinate, cultivation: &Cultivation) -> Entity {
         self.inner[coord.x as usize][coord.y as usize].cultivation = Some(*cultivation);
-        self.inner[coord.x as usize][coord.y as usize].entity.clone()
+        self.inner[coord.x as usize][coord.y as usize]
+            .entity
+            .clone()
     }
 
     fn initialize(
@@ -110,21 +112,21 @@ impl Grid {
         ruins: &Vec<Coordinate>,
         mountains: &Vec<Coordinate>,
     ) -> Self {
-        const size: usize = GRID_SIZE as usize;
-        let mut temp_vec: Vec<[Field; size]> = Vec::default();
+        const SIZE: usize = GRID_SIZE as usize;
+        let mut temp_vec: Vec<[Field; SIZE]> = Vec::default();
         for x in 0..GRID_SIZE {
             let mut col_vec: Vec<Field> = Vec::default();
 
             for y in 0..GRID_SIZE {
                 let entity = com.spawn().id();
-                col_vec.push(Field::new(entity, Coordinate::new(x as i32,y as i32)));
+                col_vec.push(Field::new(entity, Coordinate::new(x as i32, y as i32)));
             }
-            temp_vec.push(to_array::<Field, size>(col_vec));
+            temp_vec.push(to_array::<Field, SIZE>(col_vec));
         }
         let entity = com.spawn().id();
         let mut grid = Grid {
             entity,
-            inner: to_array::<[Field; size], size>(temp_vec),
+            inner: to_array::<[Field; SIZE], SIZE>(temp_vec),
         };
 
         for &pos in mountains.iter() {
@@ -138,8 +140,21 @@ impl Grid {
     }
 
     pub fn new(com: &mut Commands) -> Self {
-        let mountains: Vec<Coordinate> = vec![IVec2::new(2, 2), IVec2::new(3, 9), IVec2::new(5, 5), IVec2::new(7, 1), IVec2::new(8, 8)]; //(x,y)
-        let ruins: Vec<Coordinate> = vec![IVec2::new(1, 2), IVec2::new(1, 8), IVec2::new(5, 1), IVec2::new(5, 9), IVec2::new(9, 2), IVec2::new(9, 8)];
+        let mountains: Vec<Coordinate> = vec![
+            IVec2::new(2, 2),
+            IVec2::new(3, 9),
+            IVec2::new(5, 5),
+            IVec2::new(7, 1),
+            IVec2::new(8, 8),
+        ]; //(x,y)
+        let ruins: Vec<Coordinate> = vec![
+            IVec2::new(1, 2),
+            IVec2::new(1, 8),
+            IVec2::new(5, 1),
+            IVec2::new(5, 9),
+            IVec2::new(9, 2),
+            IVec2::new(9, 8),
+        ];
         Grid::initialize(com, &ruins, &mountains)
     }
 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-const ASSETS: [(&'static str, &'static str); 8] = [
+const ASSETS: [(&'static str, &'static str); 9] = [
     ("mountain", "mountain.png"),
     ("ruin", "ruin.png"),
     ("default", "default.png"),
@@ -10,6 +10,7 @@ const ASSETS: [(&'static str, &'static str); 8] = [
     ("goblin", "goblin,png"),
     ("river", "river.png"),
     ("village", "village.png"),
+    ("blank_card", "card.png"),
 ];
 
 #[derive(Default)]
