@@ -15,6 +15,7 @@ pub enum Cultivation {
     Village,
     Water,
     Farm,
+    Forest,
     Goblin,
 }
 
@@ -23,6 +24,7 @@ impl Into<&'static str> for Cultivation {
         match self {
             Cultivation::Village => "village",
             Cultivation::Water => "water",
+            Cultivation::Forest => "forest",
             Cultivation::Farm => "farm",
             Cultivation::Goblin => "goblin",
         }
