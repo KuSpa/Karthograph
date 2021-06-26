@@ -236,6 +236,7 @@ pub fn click_card(
     mut com: Commands,
     query: Query<(&ShapeSpawner, &GlobalTransform, &Sprite)>,
     cards: Query<&Card>,
+    shape: Query<(&Shape, Entity)>,
     mut events: EventReader<MouseButtonInput>,
     position: Res<MousePosition>,
     assets: Res<AssetManager>,
@@ -252,7 +253,10 @@ pub fn click_card(
                     &sprite.size,
                     &position.inner,
                 ) {
-                    // TODO: Disable new spawn, and so fourth
+                    // remove current Shape
+                    if let Ok((_, shape_entity)) = shape.single() {
+                        com.entity(shape_entity).despawn_recursive();
+                    }
                     let s = shape_spawner.shape.clone();
                     s.spawn(&mut com, &assets);
                     return;
