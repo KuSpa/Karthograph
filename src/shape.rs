@@ -44,6 +44,7 @@ impl DerefMut for Geometry {
         return &mut self.inner;
     }
 }
+#[derive(Clone)]
 pub struct Shape {
     geometry: Geometry,
     cultivation: Cultivation,

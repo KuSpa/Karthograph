@@ -7,8 +7,8 @@ const ASSETS: [(&'static str, &'static str); 9] = [
     ("default", "default.png"),
     ("farm", "farm.png"),
     ("forest", "forest.png"),
-    ("goblin", "goblin,png"),
-    ("river", "river.png"),
+    ("goblin", "goblin.png"),
+    ("water", "water.png"),
     ("village", "village.png"),
     ("blank_card", "card.png"),
 ];

@@ -13,10 +13,9 @@ pub enum Card {
     Shape(ShapeDefinition),
     Cultivation(CultivationDefinition),
 }
-
-pub enum CardClickable {
-    Left,
-    Right,
+#[derive(Clone)]
+pub struct ShapeSpawner {
+    shape: Shape,
 }
 
 impl Card {
@@ -25,6 +24,14 @@ impl Card {
             left,
             right,
             cultivation,
+        })
+    }
+
+    fn new_cultivation(geometry: Geometry, left: Cultivation, right: Cultivation) -> Self {
+        Card::Cultivation(CultivationDefinition {
+            geometry,
+            left,
+            right,
         })
     }
 
@@ -45,24 +52,11 @@ impl Card {
             .id();
 
         match &self {
-            Card::Shape(def) => {
-                def.spawn(com, entity, &assets);
-            }
+            Card::Shape(def) => def.spawn(com, entity, &assets),
+            Card::Cultivation(def) => def.spawn(com, entity, &assets),
             _ => panic!("Not yet implemented"),
         }
         com.entity(entity).insert(self);
-    }
-
-    fn spawn_shape(
-        &self,
-        com: &mut Commands,
-        selection: &CardClickable,
-        assets: &Res<AssetManager>,
-    ) {
-        match &self {
-            &Card::Shape(def) => def.spawn_shape(com, selection, assets),
-            _ => panic!("Not yet implemented"),
-        }
     }
 }
 
@@ -71,11 +65,8 @@ impl Default for Card {
         let one = Geometry {
             inner: vec![IVec2::new(0, 0), IVec2::new(1, 1)],
         };
-        let sec = Geometry {
-            inner: vec![IVec2::new(0, 0), IVec2::new(1, 0), IVec2::new(0, 1)],
-        };
-        let cultivation = Cultivation::Farm;
-        Card::new_shape(one, sec, cultivation)
+
+        Card::new_cultivation(one, Cultivation::Goblin, Cultivation::Farm)
     }
 }
 
@@ -86,7 +77,6 @@ struct ShapeDefinition {
 }
 
 impl ShapeDefinition {
-    //add Click handler for the options... thus, they do not need to be registered by the card usw....
     fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
         let transform = Transform::from_xyz(0., 75., 0.1); // TODO REMOVE MAGIC NUMBERS
         let handle = assets.fetch(self.cultivation.into()).unwrap();
@@ -95,6 +85,7 @@ impl ShapeDefinition {
         children.push(
             com.spawn()
                 .insert_bundle(SpriteBundle {
+                    sprite: Sprite::new(Vec2::new(100., 100.)),
                     material: handle,
                     transform,
                     ..Default::default()
@@ -107,6 +98,12 @@ impl ShapeDefinition {
 
         const DISTANCE: f32 = 50.;
         let normal_handle = assets.fetch("default").unwrap();
+        let right_spawner = ShapeSpawner {
+            shape: Shape::new(&self.right, &self.cultivation),
+        };
+        let left_spawner = ShapeSpawner {
+            shape: Shape::new(&self.left, &self.cultivation),
+        };
         let left_children: Vec<Entity> = self
             .left
             .as_transform(DISTANCE, 0.2)
@@ -119,7 +116,7 @@ impl ShapeDefinition {
                         transform,
                         ..Default::default()
                     })
-                    .insert(CardClickable::Left) // If I want an 'AREA' i can add this to the parent entity `left` and add an Rectangle, where it should be clicked...
+                    .insert(left_spawner.clone()) // If I want an 'AREA' i can add this to the parent entity `left` and add an Rectangle, where it should be clicked...
                     .id()
             })
             .collect();
@@ -145,7 +142,7 @@ impl ShapeDefinition {
                         transform,
                         ..Default::default()
                     })
-                    .insert(CardClickable::Right)
+                    .insert(right_spawner.clone())
                     .id()
             })
             .collect();
@@ -160,24 +157,73 @@ impl ShapeDefinition {
 
         com.entity(parent).push_children(&children);
     }
+}
 
-    fn spawn_shape(
-        &self,
-        com: &mut Commands,
-        selection: &CardClickable,
-        assets: &Res<AssetManager>,
-    ) {
-        println!("spawn");
-        let geom = match &selection {
-            CardClickable::Left => &self.left,
-            CardClickable::Right => &self.right,
+struct CultivationDefinition {
+    geometry: Geometry,
+    left: Cultivation,
+    right: Cultivation,
+}
+
+impl CultivationDefinition {
+    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+        let offset = Vec3::new(0., 50., 0.1);
+        const DISTANCE: f32 = 50.; //TODO REMOVE MAGIC NUMBERS
+        let normal_handle = assets.fetch("default").unwrap();
+        let mut children: Vec<Entity> = self
+            .geometry
+            .as_transform(DISTANCE, 0.0)
+            .iter_mut()
+            .map(|transform| {
+                transform.translation += offset;
+                com.spawn()
+                    .insert_bundle(SpriteBundle {
+                        sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                        transform: *transform,
+                        material: normal_handle.clone(),
+                        ..Default::default()
+                    })
+                    .id()
+            })
+            .collect();
+        // Cultivation children
+        let left_transform = Transform::from_xyz(-50., -50., 0.1);
+        let left_spawn = ShapeSpawner {
+            shape: Shape::new(&self.geometry, &self.left),
         };
-        let shape = Shape::new(&geom, &self.cultivation);
-        shape.spawn(com, &assets);
+        let left_mat = assets.fetch(self.left.into()).unwrap();
+        children.push(
+            com.spawn()
+                .insert_bundle(SpriteBundle {
+                    sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                    material: left_mat,
+                    transform: left_transform,
+                    ..Default::default()
+                })
+                .insert(left_spawn)
+                .id(),
+        );
+
+        let right_transform = Transform::from_xyz(50., -50., 0.1);
+        let right_spawn = ShapeSpawner {
+            shape: Shape::new(&self.geometry, &self.right),
+        };
+        let right_mat = assets.fetch(self.right.into()).unwrap();
+        children.push(
+            com.spawn()
+                .insert_bundle(SpriteBundle {
+                    sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                    material: right_mat,
+                    transform: right_transform,
+                    ..Default::default()
+                })
+                .insert(right_spawn)
+                .id(),
+        );
+        com.entity(parent).push_children(&children);
     }
 }
 
-struct CultivationDefinition {/* TODO */}
 struct SplinterDefinition {/* TODO */}
 
 pub fn spawn_card(mut com: Commands, query: Query<&Card>, assets: Res<AssetManager>) {
@@ -188,7 +234,7 @@ pub fn spawn_card(mut com: Commands, query: Query<&Card>, assets: Res<AssetManag
 
 pub fn click_card(
     mut com: Commands,
-    query: Query<(&CardClickable, &GlobalTransform, &Sprite)>,
+    query: Query<(&ShapeSpawner, &GlobalTransform, &Sprite)>,
     cards: Query<&Card>,
     mut events: EventReader<MouseButtonInput>,
     position: Res<MousePosition>,
@@ -200,13 +246,16 @@ pub fn click_card(
     let card = cards.single().unwrap(); // TODO
     for event in events.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
-            for (side, transform, sprite) in query.iter() {
+            for (shape_spawner, transform, sprite) in query.iter() {
                 if contains_point(
                     &transform.translation.truncate(),
                     &sprite.size,
                     &position.inner,
                 ) {
-                    card.spawn_shape(&mut com, side, &assets);
+                    // TODO: Disable new spawn, and so fourth
+                    let s = shape_spawner.shape.clone();
+                    s.spawn(&mut com, &assets);
+                    return;
                 }
             }
         }

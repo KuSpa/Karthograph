@@ -1,6 +1,6 @@
-use std::usize;
 use bevy::prelude::*;
 use bevy::render::camera::WindowOrigin;
+use std::usize;
 
 mod asset_management;
 mod card;

@@ -13,7 +13,7 @@ pub type Coordinate = IVec2;
 pub enum Cultivation {
     //Add a None type??
     Village,
-    River,
+    Water,
     Farm,
     Goblin,
 }
@@ -22,7 +22,7 @@ impl Into<&'static str> for Cultivation {
     fn into(self) -> &'static str {
         match self {
             Cultivation::Village => "village",
-            Cultivation::River => "river",
+            Cultivation::Water => "water",
             Cultivation::Farm => "farm",
             Cultivation::Goblin => "goblin",
         }
