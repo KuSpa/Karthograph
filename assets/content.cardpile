@@ -1,0 +1,20 @@
+CardPile(
+	cards: [
+		Splinter(()),// () == Name of UnitStruct
+		Splinter(SplinterDefinition),
+		Cultivation(
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(0,0),IVec2(1,0)]),
+				left: Water,
+				right: Forest
+			)
+		),
+		Shape(
+			ShapeDefinition(
+				cultivation:Goblin,
+				left: Geometry(inner: [IVec2(0,0),IVec2(1,0), IVec2(1,0)]),
+				right: Geometry(inner: [IVec2(0,0),IVec2(1,1)]),
+			)
+		),
+	]
+)

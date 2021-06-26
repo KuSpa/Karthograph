@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
+use crate::card_pile::CardPile;
+
 const ASSETS: [(&'static str, &'static str); 9] = [
     ("mountain", "mountain.png"),
     ("ruin", "ruin.png"),
@@ -16,6 +18,7 @@ const ASSETS: [(&'static str, &'static str); 9] = [
 #[derive(Default)]
 pub struct AssetManager {
     map: HashMap<&'static str, Handle<ColorMaterial>>,
+    pub cards: Handle<CardPile>,
 }
 impl AssetManager {
     fn insert_asset(&mut self, name: &'static str, handle: Handle<ColorMaterial>) {
@@ -34,7 +37,7 @@ impl AssetManager {
             let asset = materials.add(asset_server.load(path).clone().into());
             manager.insert_asset(name.into(), asset);
         }
-
+        manager.cards = asset_server.load("content.cardpile");
         manager
     }
 }

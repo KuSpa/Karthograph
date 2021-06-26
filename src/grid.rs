@@ -1,6 +1,7 @@
 use crate::asset_management::AssetManager;
 use crate::util::to_array;
 use bevy::prelude::*;
+use serde::Deserialize;
 use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
@@ -9,7 +10,7 @@ const GRID_SIZE: i32 = 11;
 const GRID_OFFSET: f32 = SPRITE_SIZE;
 pub type Coordinate = IVec2;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub enum Cultivation {
     //Add a None type??
     Village,

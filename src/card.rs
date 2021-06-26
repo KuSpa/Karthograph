@@ -1,5 +1,6 @@
 use bevy::input::mouse::MouseButtonInput;
 use bevy::math::IVec2;
+use serde::Deserialize;
 
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
@@ -8,10 +9,14 @@ use crate::{asset_management::AssetManager, grid::Cultivation};
 use crate::{GRID_OFFSET, GRID_SIZE, SPRITE_SIZE};
 use bevy::prelude::*;
 
+// TODO: remove pub, as it does not need to be visible beyond this module
+#[derive(Deserialize, Clone)]
 pub enum Card {
+    // TODO: rename Definitions to Strategies? bc. StrategyPattern?
     Splinter(SplinterDefinition),
     Shape(ShapeDefinition),
     Cultivation(CultivationDefinition),
+    //Ruin(RuinDefinition), // TODO
 }
 #[derive(Clone)]
 pub struct ShapeSpawner {
@@ -19,27 +24,7 @@ pub struct ShapeSpawner {
 }
 
 impl Card {
-    fn new_shape(left: Geometry, right: Geometry, cultivation: Cultivation) -> Self {
-        Card::Shape(ShapeDefinition {
-            left,
-            right,
-            cultivation,
-        })
-    }
-
-    fn new_cultivation(geometry: Geometry, left: Cultivation, right: Cultivation) -> Self {
-        Card::Cultivation(CultivationDefinition {
-            geometry,
-            left,
-            right,
-        })
-    }
-
-    fn new_splinter() -> Self {
-        Card::Splinter(SplinterDefinition)
-    }
-
-    fn spawn(self, com: &mut Commands, assets: &AssetManager) {
+    pub fn spawn(self, com: &mut Commands, assets: &AssetManager) {
         let handle = assets.fetch("blank_card").unwrap(); // TODO MAKE ME SAFE AND SOUND
         let transform = Transform::from_xyz(
             GRID_SIZE as f32 * SPRITE_SIZE + GRID_OFFSET * 2. + 100.,
@@ -59,7 +44,6 @@ impl Card {
             Card::Shape(def) => def.spawn(com, entity, &assets),
             Card::Cultivation(def) => def.spawn(com, entity, &assets),
             Card::Splinter(def) => def.spawn(com, entity, &assets),
-            _ => panic!("Not yet implemented"),
         }
         com.entity(entity).insert(self);
     }
@@ -67,11 +51,11 @@ impl Card {
 
 impl Default for Card {
     fn default() -> Self {
-        Card::new_splinter()
+        Card::Splinter(SplinterDefinition)
     }
 }
-
-struct ShapeDefinition {
+#[derive(Deserialize, Clone)]
+pub struct ShapeDefinition {
     left: Geometry,
     right: Geometry,
     cultivation: Cultivation,
@@ -159,8 +143,8 @@ impl ShapeDefinition {
         com.entity(parent).push_children(&children);
     }
 }
-
-struct CultivationDefinition {
+#[derive(Deserialize, Clone)]
+pub struct CultivationDefinition {
     geometry: Geometry,
     left: Cultivation,
     right: Cultivation,
@@ -224,8 +208,8 @@ impl CultivationDefinition {
         com.entity(parent).push_children(&children);
     }
 }
-
-struct SplinterDefinition;
+#[derive(Deserialize, Clone)]
+pub struct SplinterDefinition;
 impl SplinterDefinition {
     pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
         // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
@@ -277,26 +261,14 @@ impl SplinterDefinition {
     }
 }
 
-// TODO: make this smart lol
-pub fn spawn_card(mut com: Commands, query: Query<&Card>, assets: Res<AssetManager>) {
-    if query.iter().len() == 0 {
-        Card::default().spawn(&mut com, &assets);
-    }
-}
-
 pub fn click_card(
     mut com: Commands,
     query: Query<(&ShapeSpawner, &GlobalTransform, &Sprite)>,
-    cards: Query<&Card>,
     shape: Query<(&Shape, Entity)>,
     mut events: EventReader<MouseButtonInput>,
     position: Res<MousePosition>,
     assets: Res<AssetManager>,
 ) {
-    if cards.iter().len() != 1 {
-        return;
-    } //TODO FIX
-    let card = cards.single().unwrap(); // TODO
     for event in events.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
             for (shape_spawner, transform, sprite) in query.iter() {

@@ -1,13 +1,15 @@
+use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 
 use crate::asset_management::AssetManager;
+use crate::card::Card;
 use crate::grid::{Coordinate, Cultivation, FieldComponent, Grid};
 use crate::SPRITE_SIZE;
 use bevy::input::mouse::{MouseButtonInput, MouseWheel};
 use bevy::prelude::*;
 //TODO MIRROR
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct Geometry {
     // TODO should this know the size its drawn??
     pub inner: Vec<Coordinate>,
@@ -197,6 +199,7 @@ pub fn place_shape(
     mut com: Commands,
     shapes: Query<(Entity, &Shape, &Transform)>,
     mut grid: ResMut<Grid>,
+    card: Query<(Entity, &Card)>,
     mut clicks: EventReader<MouseButtonInput>,
     assets: Res<AssetManager>,
     mut fields: Query<(&FieldComponent, &mut Handle<ColorMaterial>)>,
@@ -213,6 +216,9 @@ pub fn place_shape(
                         *handle = assets.fetch(shape.cultivation.into()).unwrap();
                     }
                     com.entity(t_entity).despawn_recursive();
+                    if let Ok((card_entity, _)) = card.single() {
+                        com.entity(card_entity).despawn_recursive();
+                    }
                 }
             }
         }

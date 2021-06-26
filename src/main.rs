@@ -4,10 +4,11 @@ use std::usize;
 
 mod asset_management;
 mod card;
+mod card_pile;
 mod grid;
 mod shape;
 mod util;
-use card::spawn_card;
+use card_pile::*;
 use grid::*;
 use shape::*;
 mod mouse;
@@ -25,14 +26,17 @@ fn main() {
     App::build()
         .insert_resource(MousePosition::default())
         .add_plugins(DefaultPlugins)
+        .add_asset::<CardPile>()
+        .init_asset_loader::<CardPileLoader>()
         .add_startup_system_to_stage(StartupStage::PreStartup, init_assets.system())
         .add_startup_system(init_camera.system())
         .add_startup_system(init_grid.system())
+        .add_system(initialize_cards.system())
+        .add_system(cycle_cards.system())
         .add_system(move_shape.system())
         .add_system(place_shape.system())
         .add_system(rotate_shape.system())
         .add_system(mouse_position.system())
-        .add_system(spawn_card.system())
         .add_system(click_card.system())
         /*.add_system(
             spawn_shape
