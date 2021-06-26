@@ -35,6 +35,10 @@ impl Card {
         })
     }
 
+    fn new_splinter() -> Self {
+        Card::Splinter(SplinterDefinition)
+    }
+
     fn spawn(self, com: &mut Commands, assets: &AssetManager) {
         let handle = assets.fetch("blank_card").unwrap(); // TODO MAKE ME SAFE AND SOUND
         let transform = Transform::from_xyz(
@@ -54,6 +58,7 @@ impl Card {
         match &self {
             Card::Shape(def) => def.spawn(com, entity, &assets),
             Card::Cultivation(def) => def.spawn(com, entity, &assets),
+            Card::Splinter(def) => def.spawn(com, entity, &assets),
             _ => panic!("Not yet implemented"),
         }
         com.entity(entity).insert(self);
@@ -62,11 +67,7 @@ impl Card {
 
 impl Default for Card {
     fn default() -> Self {
-        let one = Geometry {
-            inner: vec![IVec2::new(0, 0), IVec2::new(1, 1)],
-        };
-
-        Card::new_cultivation(one, Cultivation::Goblin, Cultivation::Farm)
+        Card::new_splinter()
     }
 }
 
@@ -224,8 +225,59 @@ impl CultivationDefinition {
     }
 }
 
-struct SplinterDefinition {/* TODO */}
+struct SplinterDefinition;
+impl SplinterDefinition {
+    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+        // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
+        let geom = Geometry {
+            inner: vec![IVec2::new(0, 0)],
+        };
+        // TODO: remove magic numbers
+        const SPLINTER_OFFSET: f32 = 75.;
+        let shapes = vec![
+            (
+                Shape::new(&geom, &Cultivation::Farm),
+                Transform::from_xyz(SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
+            ),
+            (
+                Shape::new(&geom, &Cultivation::Goblin),
+                Transform::from_xyz(SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
+            ),
+            (
+                Shape::new(&geom, &Cultivation::Water),
+                Transform::from_xyz(-SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
+            ),
+            (
+                Shape::new(&geom, &Cultivation::Village),
+                Transform::from_xyz(-SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
+            ),
+            (
+                Shape::new(&geom, &Cultivation::Forest),
+                Transform::from_xyz(0., 0., 0.1),
+            ),
+        ];
+        let children: Vec<Entity> = shapes
+            .iter()
+            .map(|(shape, transform)| {
+                let material = assets.fetch(shape.cultivation.into()).unwrap();
+                com.spawn()
+                    .insert_bundle(SpriteBundle {
+                        sprite: Sprite::new(Vec2::new(50., 50.)),
+                        material,
+                        transform: *transform,
+                        ..Default::default()
+                    })
+                    .insert(ShapeSpawner {
+                        shape: shape.clone(),
+                    })
+                    .id()
+            })
+            .collect();
+        com.entity(parent).push_children(&children);
+    }
+}
 
+// TODO: make this smart lol
 pub fn spawn_card(mut com: Commands, query: Query<&Card>, assets: Res<AssetManager>) {
     if query.iter().len() == 0 {
         Card::default().spawn(&mut com, &assets);

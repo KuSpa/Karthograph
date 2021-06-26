@@ -46,8 +46,8 @@ impl DerefMut for Geometry {
 }
 #[derive(Clone)]
 pub struct Shape {
-    geometry: Geometry,
-    cultivation: Cultivation,
+    pub geometry: Geometry,
+    pub cultivation: Cultivation,
 }
 
 impl Shape {
