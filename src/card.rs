@@ -16,15 +16,35 @@ pub enum Card {
     Splinter(SplinterDefinition),
     Shape(ShapeDefinition),
     Cultivation(CultivationDefinition),
-    //Ruin(RuinDefinition), // TODO
+    Ruin(RuinDefinition),
 }
 #[derive(Clone)]
-pub struct ShapeSpawner {
-    shape: Shape,
+pub enum CardClickEvent {
+    SpawnShape(Shape),
+    Ruin,
+}
+
+#[derive(Default)]
+pub struct RuinIndicator {
+    inner: bool,
+}
+
+impl RuinIndicator {
+    pub fn set(&mut self) {
+        self.inner = true;
+    }
+
+    pub fn reset(&mut self) {
+        self.inner = false;
+    }
+
+    pub fn value(&self) -> bool {
+        self.inner
+    }
 }
 
 impl Card {
-    pub fn spawn(self, com: &mut Commands, assets: &AssetManager) {
+    pub fn spawn(self, com: &mut Commands, assets: &AssetManager, ruin: bool) {
         let handle = assets.fetch("blank_card").unwrap(); // TODO MAKE ME SAFE AND SOUND
         let transform = Transform::from_xyz(
             GRID_SIZE as f32 * SPRITE_SIZE + GRID_OFFSET * 2. + 100.,
@@ -41,9 +61,10 @@ impl Card {
             .id();
 
         match &self {
-            Card::Shape(def) => def.spawn(com, entity, &assets),
-            Card::Cultivation(def) => def.spawn(com, entity, &assets),
-            Card::Splinter(def) => def.spawn(com, entity, &assets),
+            Card::Shape(def) => def.spawn(com, entity, &assets, ruin),
+            Card::Cultivation(def) => def.spawn(com, entity, &assets, ruin),
+            Card::Splinter(def) => def.spawn(com, entity, &assets, ruin),
+            Card::Ruin(def) => def.spawn(com, entity, &assets),
         }
         com.entity(entity).insert(self);
     }
@@ -54,6 +75,29 @@ impl Default for Card {
         Card::Splinter(SplinterDefinition)
     }
 }
+
+#[derive(Deserialize, Clone)]
+pub struct RuinDefinition;
+impl RuinDefinition {
+    fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+        // Ruins don't do anything, move on, as soon as anything is clicked
+        // Make it look nice tho
+        let handle = assets.fetch("ruin").unwrap(); //wrap "ruin" into some constant?
+        let ent = com
+            .spawn()
+            .insert_bundle(SpriteBundle {
+                sprite: Sprite::new(Vec2::new(100., 100.)),
+                material: handle,
+                transform: Transform::from_xyz(0., 0., 0.1),
+                ..Default::default()
+            })
+            .id();
+        com.entity(parent)
+            .push_children(&[ent])
+            .insert(CardClickEvent::Ruin);
+    }
+}
+
 #[derive(Deserialize, Clone)]
 pub struct ShapeDefinition {
     left: Geometry,
@@ -62,7 +106,7 @@ pub struct ShapeDefinition {
 }
 
 impl ShapeDefinition {
-    fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+    fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
         let transform = Transform::from_xyz(0., 75., 0.1); // TODO REMOVE MAGIC NUMBERS
         let handle = assets.fetch(self.cultivation.into()).unwrap();
         let mut children: Vec<Entity> = Default::default();
@@ -83,12 +127,10 @@ impl ShapeDefinition {
 
         const DISTANCE: f32 = 50.;
         let normal_handle = assets.fetch("default").unwrap();
-        let right_spawner = ShapeSpawner {
-            shape: Shape::new(&self.right, &self.cultivation),
-        };
-        let left_spawner = ShapeSpawner {
-            shape: Shape::new(&self.left, &self.cultivation),
-        };
+        let right_spawner =
+            CardClickEvent::SpawnShape(Shape::new(&self.right, &self.cultivation, ruin));
+        let left_spawner =
+            CardClickEvent::SpawnShape(Shape::new(&self.left, &self.cultivation, ruin));
         let left_children: Vec<Entity> = self
             .left
             .as_transform(DISTANCE, 0.2)
@@ -151,7 +193,7 @@ pub struct CultivationDefinition {
 }
 
 impl CultivationDefinition {
-    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
         let offset = Vec3::new(0., 50., 0.1);
         const DISTANCE: f32 = 50.; //TODO REMOVE MAGIC NUMBERS
         let normal_handle = assets.fetch("default").unwrap();
@@ -173,9 +215,7 @@ impl CultivationDefinition {
             .collect();
         // Cultivation children
         let left_transform = Transform::from_xyz(-50., -50., 0.1);
-        let left_spawn = ShapeSpawner {
-            shape: Shape::new(&self.geometry, &self.left),
-        };
+        let left_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin));
         let left_mat = assets.fetch(self.left.into()).unwrap();
         children.push(
             com.spawn()
@@ -190,9 +230,7 @@ impl CultivationDefinition {
         );
 
         let right_transform = Transform::from_xyz(50., -50., 0.1);
-        let right_spawn = ShapeSpawner {
-            shape: Shape::new(&self.geometry, &self.right),
-        };
+        let right_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.right, ruin));
         let right_mat = assets.fetch(self.right.into()).unwrap();
         children.push(
             com.spawn()
@@ -211,7 +249,7 @@ impl CultivationDefinition {
 #[derive(Deserialize, Clone)]
 pub struct SplinterDefinition;
 impl SplinterDefinition {
-    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager) {
+    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
         // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
         let geom = Geometry {
             inner: vec![IVec2::new(0, 0)],
@@ -220,23 +258,23 @@ impl SplinterDefinition {
         const SPLINTER_OFFSET: f32 = 75.;
         let shapes = vec![
             (
-                Shape::new(&geom, &Cultivation::Farm),
+                Shape::new(&geom, &Cultivation::Farm, ruin),
                 Transform::from_xyz(SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Goblin),
+                Shape::new(&geom, &Cultivation::Goblin, ruin),
                 Transform::from_xyz(SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Water),
+                Shape::new(&geom, &Cultivation::Water, ruin),
                 Transform::from_xyz(-SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Village),
+                Shape::new(&geom, &Cultivation::Village, ruin),
                 Transform::from_xyz(-SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Forest),
+                Shape::new(&geom, &Cultivation::Forest, ruin),
                 Transform::from_xyz(0., 0., 0.1),
             ),
         ];
@@ -251,9 +289,7 @@ impl SplinterDefinition {
                         transform: *transform,
                         ..Default::default()
                     })
-                    .insert(ShapeSpawner {
-                        shape: shape.clone(),
-                    })
+                    .insert(CardClickEvent::SpawnShape(shape.clone()))
                     .id()
             })
             .collect();
@@ -263,15 +299,16 @@ impl SplinterDefinition {
 
 pub fn click_card(
     mut com: Commands,
-    query: Query<(&ShapeSpawner, &GlobalTransform, &Sprite)>,
+    query: Query<(&CardClickEvent, &GlobalTransform, &Sprite, Entity)>,
     shape: Query<(&Shape, Entity)>,
     mut events: EventReader<MouseButtonInput>,
+    mut ruin: ResMut<RuinIndicator>,
     position: Res<MousePosition>,
     assets: Res<AssetManager>,
 ) {
     for event in events.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
-            for (shape_spawner, transform, sprite) in query.iter() {
+            for (shape_spawner, transform, sprite, entity) in query.iter() {
                 if contains_point(
                     &transform.translation.truncate(),
                     &sprite.size,
@@ -281,8 +318,16 @@ pub fn click_card(
                     if let Ok((_, shape_entity)) = shape.single() {
                         com.entity(shape_entity).despawn_recursive();
                     }
-                    let s = shape_spawner.shape.clone();
-                    s.spawn(&mut com, &assets);
+                    //let s = shape_spawner.shape.clone();
+                    match &shape_spawner {
+                        CardClickEvent::SpawnShape(shape) => {
+                            shape.clone().spawn(&mut com, &assets);
+                        }
+                        CardClickEvent::Ruin => {
+                            com.entity(entity).despawn_recursive();
+                            ruin.set()
+                        }
+                    };
                     return;
                 }
             }

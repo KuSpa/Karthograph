@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::render::camera::WindowOrigin;
+use card::RuinIndicator;
 use std::usize;
 
 mod asset_management;
@@ -24,6 +25,7 @@ pub const GRID_OFFSET: f32 = SPRITE_SIZE;
 
 fn main() {
     App::build()
+        .insert_resource(RuinIndicator::default())
         .insert_resource(MousePosition::default())
         .add_plugins(DefaultPlugins)
         .add_asset::<CardPile>()

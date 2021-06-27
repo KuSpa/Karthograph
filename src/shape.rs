@@ -50,13 +50,15 @@ impl DerefMut for Geometry {
 pub struct Shape {
     pub geometry: Geometry,
     pub cultivation: Cultivation,
+    pub ruin: bool,
 }
 
 impl Shape {
-    pub fn new(g: &Geometry, cult: &Cultivation) -> Self {
+    pub fn new(g: &Geometry, cult: &Cultivation, ruin: bool) -> Self {
         Self {
             geometry: g.clone(),
             cultivation: cult.clone(),
+            ruin,
         }
     }
 
@@ -112,22 +114,28 @@ impl Shape {
         self.geometry.rotate_counter_clockwise();
     }
 
-    fn is_placable(&self, grid: &Grid, coord: &Coordinate) -> bool {
+    fn is_placable(&self, grid: &Grid, coord: &Coordinate, ruin: bool) -> bool {
+        let mut on_ruin = false;
         for &pos in self.geometry.iter() {
+            if grid.is_ruin(&(pos + *coord)) {
+                on_ruin = true;
+            }
             if !grid.is_free(&(pos + *coord)) {
                 return false;
             }
         }
-        true
+        // == !(ruin && !on_ruin) <= if it SHOULD be on a ruin, but is NOT, then return false
+        !ruin || on_ruin
     }
 
     fn try_place(
         &self,
         grid: &mut Grid,
         position: &Coordinate,
+        ruin: bool,
     ) -> Result<Vec<Entity>, &'static str> {
         //return an error(?)
-        if !self.is_placable(&grid, &position) {
+        if !self.is_placable(&grid, &position, ruin) {
             return Err("Can't place the shape here");
         }
         Ok(self
@@ -146,6 +154,7 @@ impl Default for Shape {
         Self {
             geometry,
             cultivation: Cultivation::Village,
+            ruin: false,
         }
     }
 }
@@ -161,7 +170,7 @@ pub fn move_shape(
             //calculate the closest cell
             let mut position = event.position;
             let grid_pos = Grid::screen_to_grid(position);
-            if shape.is_placable(&grid, &grid_pos) {
+            if shape.is_placable(&grid, &grid_pos, shape.ruin) {
                 position = Grid::grid_to_screen(grid_pos);
             }
             // IF CANNOT PLACE => DONT MOVE
@@ -209,7 +218,7 @@ pub fn place_shape(
             if let Ok((t_entity, shape, transform)) = shapes.single() {
                 let position = Vec2::new(transform.translation.x, transform.translation.y);
                 let grid_position = Grid::screen_to_grid(position);
-                if let Ok(entities) = shape.try_place(&mut grid, &grid_position) {
+                if let Ok(entities) = shape.try_place(&mut grid, &grid_position, shape.ruin) {
                     // Well we got through all the ifs and if lets, it's time to DO SOME STUFF
                     for &entity in entities.iter() {
                         let (_, mut handle) = fields.get_mut(entity).unwrap();

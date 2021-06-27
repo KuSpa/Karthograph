@@ -88,6 +88,13 @@ impl Grid {
         IVec2::new(position.x as i32, position.y as i32)
     }
 
+    pub fn is_ruin(&self, coord: &Coordinate) -> bool {
+        if !self.inbound(&coord) {
+            return false;
+        }
+        self.inner[coord.x as usize][coord.y as usize].terrain == Terrain::Ruin
+    }
+
     pub fn grid_to_screen(coord: Coordinate) -> Vec2 {
         let mut position = Vec2::new(GRID_OFFSET, GRID_OFFSET);
         position.x += coord.x as f32 * SPRITE_SIZE;
@@ -95,8 +102,12 @@ impl Grid {
         position
     }
 
+    fn inbound(&self, coord: &Coordinate) -> bool {
+        !(coord.x >= GRID_SIZE || coord.y >= GRID_SIZE || coord.x < 0 || coord.y < 0)
+    }
+
     pub fn is_free(&self, coord: &Coordinate) -> bool {
-        if coord.x >= GRID_SIZE || coord.y >= GRID_SIZE || coord.x < 0 || coord.y < 0 {
+        if !self.inbound(coord) {
             return false;
         }
         let ref field = self.inner[coord.x as usize][coord.y as usize];

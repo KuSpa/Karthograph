@@ -1,4 +1,7 @@
-use crate::{asset_management::AssetManager, card::Card};
+use crate::{
+    asset_management::AssetManager,
+    card::{Card, RuinIndicator},
+};
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
     prelude::*,
@@ -47,6 +50,7 @@ pub fn cycle_cards(
     mut com: Commands,
     active_card: Query<&Card>,
     mut card_pile: Query<&mut CardPile>,
+    mut ruin: ResMut<RuinIndicator>,
     assets: Res<AssetManager>,
 ) {
     if let Ok(mut pile) = card_pile.single_mut() {
@@ -54,7 +58,8 @@ pub fn cycle_cards(
             return; // already a card active
         } else {
             if let Some(card) = pile.cards.pop() {
-                card.spawn(&mut com, &assets);
+                card.spawn(&mut com, &assets, ruin.value());
+                ruin.reset();
             }
         }
     }

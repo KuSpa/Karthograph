@@ -9,6 +9,7 @@ CardPile(
 				right: Forest
 			)
 		),
+		Ruin(()),
 		Shape(
 			ShapeDefinition(
 				cultivation:Goblin,
