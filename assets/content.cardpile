@@ -1,20 +1,86 @@
 CardPile(
 	cards: [
-		Splinter(()),// () == Name of UnitStruct
-		Splinter(SplinterDefinition),
-		Cultivation(
+		Splinter(()), //Splitterland
+		Ruin(()),//Verfallener Außenposten
+		Ruin(()),//Tempelruinen
+		Cultivation(//Hinterlandbach
 			CultivationDefinition(
-				geometry:Geometry(inner: [IVec2(0,0),IVec2(1,0)]),
-				left: Water,
-				right: Forest
+				geometry:Geometry(inner: [IVec2(0,-2),IVec2(0,-1),IVec2(0,0),IVec2(1,0), IVec2(2,0)]),
+				left: Farm,
+				right: Water
+				//time:2
 			)
 		),
-		Ruin(()),
-		Shape(
+		Shape(//Vergessener Wald
 			ShapeDefinition(
-				cultivation:Goblin,
-				left: Geometry(inner: [IVec2(0,0),IVec2(1,0), IVec2(1,0)]),
-				right: Geometry(inner: [IVec2(0,0),IVec2(1,1)]),
+				cultivation:Forest,
+				left: Geometry(inner: [IVec2(0,0),IVec2(1,1)]),//coin
+				right: Geometry(inner: [IVec2(0,1),IVec2(0,0),IVec2(1,0), IVec2(1,-1)]),
+			)
+			//time:1
+		),
+		Cultivation(//Obsthain
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(-2,0),IVec2(-1,0),IVec2(0,0),IVec2(0,-1)]),
+				left: Forest,
+				right: Farm
+				//time:2
+			)
+		),
+		Shape(//Großer Strom
+			ShapeDefinition(
+				cultivation:Water,
+				left: Geometry(inner: [IVec2(0,0),IVec2(0,1), IVec2(0,-1)]),//coin
+				right: Geometry(inner: [IVec2(-1,-1),IVec2(0,-1),IVec2(0,0), IVec2(1,0), IVec2(1,1)]),
+				//time:1
+			)
+		),
+		Cultivation(//Fischerdorf
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(-1,0),IVec2(0,0),IVec2(1,0),IVec2(2,0)]),
+				left: Village,
+				right: Water
+				//time:2
+			)
+		),
+		Cultivation(//Sumpf
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(0,-1),IVec2(0,1),IVec2(0,0),IVec2(1,0), IVec2(2,0)]),
+				left: Forest,
+				right: Water
+				//time:2
+			)
+		),
+		Shape(//Ackerland
+			ShapeDefinition(
+				cultivation:Farm,
+				left: Geometry(inner: [IVec2(0,0),IVec2(0,1)]),//coin
+				right: Geometry(inner: [IVec2(1,0),IVec2(0,-1),IVec2(-1,0), IVec2(0,0), IVec2(0,1)]),
+				//time:1
+			)
+		),
+		Shape(//Weiler
+			ShapeDefinition(
+				cultivation:Village,
+				left: Geometry(inner: [IVec2(0,0),IVec2(1,0), IVec2(0,1)]),//coin
+				right: Geometry(inner: [IVec2(-1,-1),IVec2(0,-1),IVec2(-1,0), IVec2(0,0), IVec2(1,0)]),
+				//time:1
+			)
+		),
+		Cultivation(//Gehöft
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(0,-1),IVec2(0,0),IVec2(1,0),IVec2(0,1)]),
+				left: Village,
+				right: Farm
+				//time:2
+			)
+		),
+		Cultivation(//Baumwipfeldorf
+			CultivationDefinition(
+				geometry:Geometry(inner: [IVec2(-2,0),IVec2(-1,0),IVec2(0,0),IVec2(0,1),IVec2(1,1)]),
+				left: Forest,
+				right: Village
+				//time:2
 			)
 		),
 	]
