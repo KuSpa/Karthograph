@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
-use crate::util::contains_point;
+use crate::util::{contains_point, min_f};
 use crate::{asset_management::AssetManager, grid::Cultivation};
 use crate::{GRID_OFFSET, GRID_SIZE, SPRITE_SIZE};
 use bevy::prelude::*;
@@ -123,22 +123,22 @@ impl ShapeDefinition {
         );
 
         // Geometry fields
-        // first
 
-        const DISTANCE: f32 = 50.;
+        let area= Vec2::new(100.,150.);
+        let max_size = min_f(self.left.max_size_in_rect(area), self.right.max_size_in_rect(area));
+        
         let normal_handle = assets.fetch("default").unwrap();
-        let right_spawner =
-            CardClickEvent::SpawnShape(Shape::new(&self.right, &self.cultivation, ruin));
+        
         let left_spawner =
             CardClickEvent::SpawnShape(Shape::new(&self.left, &self.cultivation, ruin));
         let left_children: Vec<Entity> = self
             .left
-            .as_transform(DISTANCE, 0.2)
+            .as_transforms_centered(max_size, 0.2)
             .iter()
             .map(|&transform| {
                 com.spawn()
                     .insert_bundle(SpriteBundle {
-                        sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                        sprite: Sprite::new(Vec2::new(max_size, max_size)),
                         material: normal_handle.clone(),
                         transform,
                         ..Default::default()
@@ -148,7 +148,7 @@ impl ShapeDefinition {
             })
             .collect();
         // TODO: depending on how large the shape is, one should adapt this transform
-        let left_transform = Transform::from_xyz(-80., -100., 0.);
+        let left_transform = Transform::from_xyz(-area.x/2.-10., -area.y/2.-10., 0.);
         let left = com
             .spawn()
             .insert(left_transform)
@@ -157,14 +157,16 @@ impl ShapeDefinition {
             .id();
         children.push(left);
 
+        let right_spawner =
+            CardClickEvent::SpawnShape(Shape::new(&self.right, &self.cultivation, ruin));
         let right_children: Vec<Entity> = self
             .right
-            .as_transform(DISTANCE, 0.2)
+            .as_transforms_centered(max_size, 0.2)
             .iter()
             .map(|&transform| {
                 com.spawn()
                     .insert_bundle(SpriteBundle {
-                        sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                        sprite: Sprite::new(Vec2::new(max_size, max_size)),
                         material: normal_handle.clone(),
                         transform,
                         ..Default::default()
@@ -173,7 +175,7 @@ impl ShapeDefinition {
                     .id()
             })
             .collect();
-        let right_transform = Transform::from_xyz(80., -100., 0.);
+        let right_transform = Transform::from_xyz(area.x/2. + 10., -area.y/2. -10., 0.);
         let right = com
             .spawn()
             .insert(right_transform)
@@ -194,18 +196,22 @@ pub struct CultivationDefinition {
 
 impl CultivationDefinition {
     pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
-        let offset = Vec3::new(0., 50., 0.1);
-        const DISTANCE: f32 = 50.; //TODO REMOVE MAGIC NUMBERS
+        let top_offset = Vec3::new(0., 75., 0.1);
+        let top_window = Vec2::new(200., 125.); //TODO REMOVE MAGIC numbers
+        let square_size = self.geometry.max_size_in_rect(top_window);
+        let cultivation_size = 75.;
+
+        // show shape
         let normal_handle = assets.fetch("default").unwrap();
         let mut children: Vec<Entity> = self
             .geometry
-            .as_transform(DISTANCE, 0.0)
+            .as_transforms_centered(square_size, 0.0)
             .iter_mut()
             .map(|transform| {
-                transform.translation += offset;
+                transform.translation += top_offset;
                 com.spawn()
                     .insert_bundle(SpriteBundle {
-                        sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                        sprite: Sprite::new(Vec2::new(square_size, square_size)),
                         transform: *transform,
                         material: normal_handle.clone(),
                         ..Default::default()
@@ -213,6 +219,7 @@ impl CultivationDefinition {
                     .id()
             })
             .collect();
+            
         // Cultivation children
         let left_transform = Transform::from_xyz(-50., -50., 0.1);
         let left_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin));
@@ -220,7 +227,7 @@ impl CultivationDefinition {
         children.push(
             com.spawn()
                 .insert_bundle(SpriteBundle {
-                    sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                    sprite: Sprite::new(Vec2::new(cultivation_size, cultivation_size)),
                     material: left_mat,
                     transform: left_transform,
                     ..Default::default()
@@ -235,7 +242,7 @@ impl CultivationDefinition {
         children.push(
             com.spawn()
                 .insert_bundle(SpriteBundle {
-                    sprite: Sprite::new(Vec2::new(DISTANCE, DISTANCE)),
+                    sprite: Sprite::new(Vec2::new(cultivation_size, cultivation_size)),
                     material: right_mat,
                     transform: right_transform,
                     ..Default::default()

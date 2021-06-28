@@ -4,6 +4,7 @@ use std::ops::{Deref, DerefMut};
 use crate::asset_management::AssetManager;
 use crate::card::Card;
 use crate::grid::{Coordinate, Cultivation, FieldComponent, Grid};
+use crate::util::min_f;
 use crate::SPRITE_SIZE;
 use bevy::input::mouse::{MouseButtonInput, MouseWheel};
 use bevy::prelude::*;
@@ -27,10 +28,43 @@ impl Geometry {
         }
     }
 
-    pub fn as_transform(&self, distance: f32, z: f32) -> Vec<Transform> {
+    pub fn as_transforms_centered(&self, distance: f32, z: f32) -> Vec<Transform> {
+        let offset = self.center_offset();
+        let mut transforms = self.as_transforms(distance, z);
+        transforms
+            .iter_mut()
+            .for_each(|trans| trans.translation -= offset * distance);
+
+        transforms
+    }
+
+    pub fn as_transforms(&self, distance: f32, z: f32) -> Vec<Transform> {
         self.iter()
             .map(|pos| Transform::from_xyz(distance * pos.x as f32, distance * pos.y as f32, z))
             .collect()
+    }
+
+    fn min_max(&self) -> (IVec2, IVec2) {
+        let mut max_v = IVec2::ZERO;
+        let mut min_v = IVec2::ZERO;
+        for coord in self.iter() {
+            min_v = min_v.min(coord.clone());
+            max_v = max_v.max(coord.clone());
+        }
+        (min_v, max_v)
+    }
+
+    pub fn max_size_in_rect(&self, size: Vec2) -> f32 {
+        let (min_v, max_v) = self.min_max();
+        let diff = max_v - min_v + IVec2::ONE;
+        //calculate the largest possible square size
+        min_f(size.x / (diff.x as f32), size.y / (diff.y as f32))
+    }
+
+    fn center_offset(&self) -> Vec3 {
+        let (min_v, max_v) = self.min_max();
+        let offset = max_v.as_f32() - (max_v.as_f32() - min_v.as_f32()) / 2.;
+        Vec3::new(offset.x as f32, offset.y as f32, 0.)
     }
 }
 
@@ -62,7 +96,6 @@ impl Shape {
         }
     }
 
-    // TODO make this non static
     pub fn spawn(self, com: &mut Commands, assets: &Res<AssetManager>) -> Entity {
         //TODO PROPER TEXTURE
         let handle = assets.fetch(self.cultivation.into()).unwrap();
@@ -70,7 +103,7 @@ impl Shape {
         let mut children = Vec::<Entity>::new();
         let mat = handle;
 
-        for &transform in self.geometry.as_transform(SPRITE_SIZE, 0.).iter() {
+        for &transform in self.geometry.as_transforms(SPRITE_SIZE, 0.).iter() {
             let child = com
                 .spawn()
                 .insert_bundle(SpriteBundle {
