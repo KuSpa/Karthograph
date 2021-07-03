@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::camera::WindowOrigin;
 use card::RuinIndicator;
+use seasons::PassedTime;
 use std::usize;
 
 mod asset_management;
@@ -13,6 +14,7 @@ use card_pile::*;
 use grid::*;
 use shape::*;
 mod mouse;
+mod seasons;
 use card::click_card;
 use mouse::*;
 
@@ -26,6 +28,7 @@ pub const GRID_OFFSET: f32 = SPRITE_SIZE;
 fn main() {
     App::build()
         .insert_resource(RuinIndicator::default())
+        .insert_resource(PassedTime::default())
         .insert_resource(MousePosition::default())
         .add_plugins(DefaultPlugins)
         .add_asset::<CardPile>()

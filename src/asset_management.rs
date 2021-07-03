@@ -19,6 +19,7 @@ const ASSETS: [(&'static str, &'static str); 9] = [
 pub struct AssetManager {
     map: HashMap<&'static str, Handle<ColorMaterial>>,
     pub cards: Handle<CardPile>,
+    pub font: Handle<Font>
 }
 impl AssetManager {
     fn insert_asset(&mut self, name: &'static str, handle: Handle<ColorMaterial>) {
@@ -38,6 +39,7 @@ impl AssetManager {
             manager.insert_asset(name.into(), asset);
         }
         manager.cards = asset_server.load("content.cardpile");
+        manager.font = asset_server.load("font.ttf");
         manager
     }
 }

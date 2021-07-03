@@ -1,7 +1,4 @@
-use crate::{
-    asset_management::AssetManager,
-    card::{Card, RuinIndicator},
-};
+use crate::{asset_management::AssetManager, card::{Card, RuinIndicator}, seasons::PassedTime};
 use bevy::{
     asset::{AssetLoader, LoadContext, LoadedAsset},
     prelude::*,
@@ -50,14 +47,17 @@ pub fn cycle_cards(
     mut com: Commands,
     active_card: Query<&Card>,
     mut card_pile: Query<&mut CardPile>,
+    mut passed_time: ResMut<PassedTime>,
     mut ruin: ResMut<RuinIndicator>,
     assets: Res<AssetManager>,
 ) {
     if let Ok(mut pile) = card_pile.single_mut() {
-        if active_card.iter().len() == 1 {
-            return; // already a card active
+        if active_card.single().is_ok() {
+            return; // already an active card
         } else {
             if let Some(card) = pile.cards.pop() {
+                //time is added before cards are placed
+                *passed_time += card.time();
                 card.spawn(&mut com, &assets, ruin.value());
                 ruin.reset();
             }

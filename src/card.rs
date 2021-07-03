@@ -51,8 +51,33 @@ impl Card {
             300.,
             0.,
         ); //ANKOR IS IN THE MIDDLE
+
+        //====== TIME =======
+        let text_style = TextStyle {
+            font: assets.font.clone(),
+            font_size: 60.0,
+            color: Color::WHITE,
+        };
+        let text_alignment = TextAlignment {
+            vertical: VerticalAlign::Center,
+            horizontal: HorizontalAlign::Center,
+        };
+        let time = self.time().to_string();
+
+        println!("{}",time);
+
+        let font_entity = com
+            .spawn_bundle(Text2dBundle {
+                text: Text::with_section(&time, text_style, text_alignment),
+                ..Default::default()
+            })
+            .insert(Transform::from_xyz(-100., 175., 0.1))
+            .insert(GlobalTransform::default())
+            .id();
+        //====== TIMER EN =====
         let entity = com
             .spawn()
+            .push_children(&[font_entity])
             .insert_bundle(SpriteBundle {
                 material: handle,
                 transform,
@@ -67,6 +92,14 @@ impl Card {
             Card::Ruin(def) => def.spawn(com, entity, &assets),
         }
         com.entity(entity).insert(self);
+    }
+
+    pub fn time(&self) -> i32 {
+        match &self {
+            Card::Cultivation(_) => 2,
+            Card::Shape(_) => 1,
+            _ => 0,
+        }
     }
 }
 
@@ -124,11 +157,14 @@ impl ShapeDefinition {
 
         // Geometry fields
 
-        let area= Vec2::new(100.,150.);
-        let max_size = min_f(self.left.max_size_in_rect(area), self.right.max_size_in_rect(area));
-        
+        let area = Vec2::new(100., 150.);
+        let max_size = min_f(
+            self.left.max_size_in_rect(area),
+            self.right.max_size_in_rect(area),
+        );
+
         let normal_handle = assets.fetch("default").unwrap();
-        
+
         let left_spawner =
             CardClickEvent::SpawnShape(Shape::new(&self.left, &self.cultivation, ruin));
         let left_children: Vec<Entity> = self
@@ -148,7 +184,7 @@ impl ShapeDefinition {
             })
             .collect();
         // TODO: depending on how large the shape is, one should adapt this transform
-        let left_transform = Transform::from_xyz(-area.x/2.-10., -area.y/2.-10., 0.);
+        let left_transform = Transform::from_xyz(-area.x / 2. - 10., -area.y / 2. - 10., 0.);
         let left = com
             .spawn()
             .insert(left_transform)
@@ -175,7 +211,7 @@ impl ShapeDefinition {
                     .id()
             })
             .collect();
-        let right_transform = Transform::from_xyz(area.x/2. + 10., -area.y/2. -10., 0.);
+        let right_transform = Transform::from_xyz(area.x / 2. + 10., -area.y / 2. - 10., 0.);
         let right = com
             .spawn()
             .insert(right_transform)
@@ -219,7 +255,7 @@ impl CultivationDefinition {
                     .id()
             })
             .collect();
-            
+
         // Cultivation children
         let left_transform = Transform::from_xyz(-50., -50., 0.1);
         let left_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin));
