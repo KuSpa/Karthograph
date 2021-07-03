@@ -15,9 +15,9 @@ pub fn contains_point(pos: &Vec2, size: &Vec2, pointer: &Vec2) -> bool {
         || pointer.y > pos.y + bounds.y)
 }
 
-pub fn min_f(lhs:f32, rhs:f32)->f32{
+pub fn min_f(lhs: f32, rhs: f32) -> f32 {
     if lhs < rhs {
-        return lhs
+        return lhs;
     }
     rhs
 }

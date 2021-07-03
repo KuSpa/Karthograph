@@ -63,9 +63,6 @@ impl Card {
             horizontal: HorizontalAlign::Center,
         };
         let time = self.time().to_string();
-
-        println!("{}",time);
-
         let font_entity = com
             .spawn_bundle(Text2dBundle {
                 text: Text::with_section(&time, text_style, text_alignment),

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-use crate::{GameState, card_pile::CardPile};
+use crate::{card_pile::CardPile, GameState};
 
 const ASSETS: [(&'static str, &'static str); 9] = [
     ("mountain", "mountain.png"),
@@ -19,7 +19,7 @@ const ASSETS: [(&'static str, &'static str); 9] = [
 pub struct AssetManager {
     map: HashMap<&'static str, Handle<ColorMaterial>>,
     pub cards: Handle<CardPile>,
-    pub font: Handle<Font>
+    pub font: Handle<Font>,
 }
 impl AssetManager {
     fn insert_asset(&mut self, name: &'static str, handle: Handle<ColorMaterial>) {
@@ -29,10 +29,11 @@ impl AssetManager {
         self.map.get(name).cloned()
     }
 
-    pub fn initialize(&mut self,
+    pub fn initialize(
+        &mut self,
         asset_server: Res<AssetServer>,
         mut materials: ResMut<Assets<ColorMaterial>>,
-    ){
+    ) {
         for (name, path) in ASSETS {
             let asset = materials.add(asset_server.load(path).clone().into());
             self.insert_asset(name.into(), asset);
@@ -41,10 +42,15 @@ impl AssetManager {
         self.font = asset_server.load("font.ttf");
     }
 
-    fn is_loaded(&self, color_mat: &Res<Assets<ColorMaterial>>,card_pile:&Res<Assets<CardPile>>, font:&Res<Assets<Font>> )-> bool{
-        for (_,handle) in self.map.iter(){
-            if color_mat.get(handle).is_none(){
-                return false
+    fn is_loaded(
+        &self,
+        color_mat: &Res<Assets<ColorMaterial>>,
+        card_pile: &Res<Assets<CardPile>>,
+        font: &Res<Assets<Font>>,
+    ) -> bool {
+        for (_, handle) in self.map.iter() {
+            if color_mat.get(handle).is_none() {
+                return false;
             }
         }
         card_pile.get(self.cards.clone()).is_some() && font.get(self.font.clone()).is_some()
@@ -59,10 +65,14 @@ pub fn init_assets(
     &asset_manager.initialize(asset_server, materials);
 }
 
-
-pub fn check_readiness(assets : Res<AssetManager>, mut state: ResMut<State<GameState>>, color_mat: Res<Assets<ColorMaterial>>,card_pile:Res<Assets<CardPile>>, font:Res<Assets<Font>>){
+pub fn check_readiness(
+    assets: Res<AssetManager>,
+    mut state: ResMut<State<GameState>>,
+    color_mat: Res<Assets<ColorMaterial>>,
+    card_pile: Res<Assets<CardPile>>,
+    font: Res<Assets<Font>>,
+) {
     if assets.is_loaded(&color_mat, &card_pile, &font) {
-        println!("all loaded");
         state.set(GameState::SeasonState);
     }
 }
