@@ -43,7 +43,7 @@ impl Default for CardPile {
     }
 }
 
-pub fn cycle_cards(
+pub fn next_card(
     mut com: Commands,
     active_card: Query<&Card>,
     mut card_pile: Query<&mut CardPile>,

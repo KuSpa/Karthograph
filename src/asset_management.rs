@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-use crate::card_pile::CardPile;
+use crate::{GameState, card_pile::CardPile};
 
 const ASSETS: [(&'static str, &'static str); 9] = [
     ("mountain", "mountain.png"),
@@ -29,26 +29,40 @@ impl AssetManager {
         self.map.get(name).cloned()
     }
 
-    pub fn new(
+    pub fn initialize(&mut self,
         asset_server: Res<AssetServer>,
         mut materials: ResMut<Assets<ColorMaterial>>,
-    ) -> Self {
-        let mut manager = Self::default();
+    ){
         for (name, path) in ASSETS {
             let asset = materials.add(asset_server.load(path).clone().into());
-            manager.insert_asset(name.into(), asset);
+            self.insert_asset(name.into(), asset);
         }
-        manager.cards = asset_server.load("content.cardpile");
-        manager.font = asset_server.load("font.ttf");
-        manager
+        self.cards = asset_server.load("content.cardpile");
+        self.font = asset_server.load("font.ttf");
+    }
+
+    fn is_loaded(&self, color_mat: &Res<Assets<ColorMaterial>>,card_pile:&Res<Assets<CardPile>>, font:&Res<Assets<Font>> )-> bool{
+        for (_,handle) in self.map.iter(){
+            if color_mat.get(handle).is_none(){
+                return false
+            }
+        }
+        card_pile.get(self.cards.clone()).is_some() && font.get(self.font.clone()).is_some()
     }
 }
 
 pub fn init_assets(
-    mut com: Commands,
+    mut asset_manager: ResMut<AssetManager>,
     asset_server: Res<AssetServer>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let assets = AssetManager::new(asset_server, materials);
-    com.insert_resource(assets);
+    &asset_manager.initialize(asset_server, materials);
+}
+
+
+pub fn check_readiness(assets : Res<AssetManager>, mut state: ResMut<State<GameState>>, color_mat: Res<Assets<ColorMaterial>>,card_pile:Res<Assets<CardPile>>, font:Res<Assets<Font>>){
+    if assets.is_loaded(&color_mat, &card_pile, &font) {
+        println!("all loaded");
+        state.set(GameState::SeasonState);
+    }
 }
