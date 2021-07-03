@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{card_pile::CardPile, GameState};
 
-const ASSETS: [(&'static str, &'static str); 9] = [
+const ASSETS: [(&str, &str); 9] = [
     ("mountain", "mountain.png"),
     ("ruin", "ruin.png"),
     ("default", "default.png"),
@@ -36,7 +36,7 @@ impl AssetManager {
     ) {
         for (name, path) in ASSETS {
             let asset = materials.add(asset_server.load(path).clone().into());
-            self.insert_asset(name.into(), asset);
+            self.insert_asset(&name, asset);
         }
         self.cards = asset_server.load("content.cardpile");
         self.font = asset_server.load("font.ttf");
@@ -62,7 +62,7 @@ pub fn init_assets(
     asset_server: Res<AssetServer>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    &asset_manager.initialize(asset_server, materials);
+    asset_manager.initialize(asset_server, materials);
 }
 
 pub fn check_readiness(
@@ -73,6 +73,6 @@ pub fn check_readiness(
     font: Res<Assets<Font>>,
 ) {
     if assets.is_loaded(&color_mat, &card_pile, &font) {
-        state.set(GameState::SeasonState);
+        state.set(GameState::SeasonState).unwrap();
     }
 }

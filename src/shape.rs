@@ -48,8 +48,8 @@ impl Geometry {
         let mut max_v = IVec2::ZERO;
         let mut min_v = IVec2::ZERO;
         for coord in self.iter() {
-            min_v = min_v.min(coord.clone());
-            max_v = max_v.max(coord.clone());
+            min_v = min_v.min(*coord);
+            max_v = max_v.max(*coord);
         }
         (min_v, max_v)
     }
@@ -71,13 +71,13 @@ impl Geometry {
 impl Deref for Geometry {
     type Target = Vec<Coordinate>;
     fn deref(&self) -> &Self::Target {
-        return &self.inner;
+        &self.inner
     }
 }
 
 impl DerefMut for Geometry {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        return &mut self.inner;
+        &mut self.inner
     }
 }
 #[derive(Clone)]
@@ -91,7 +91,7 @@ impl Shape {
     pub fn new(g: &Geometry, cult: &Cultivation, ruin: bool) -> Self {
         Self {
             geometry: g.clone(),
-            cultivation: cult.clone(),
+            cultivation: *cult,
             ruin,
         }
     }
@@ -126,7 +126,7 @@ impl Shape {
     }
 
     // POSSIBLE BREAK -> CALLER DETERMINES WHAT TRANSFORMS TO ROTATE
-    pub fn rotate_clockwise<'a>(&mut self, transforms: &mut [Mut<Transform>]) {
+    pub fn rotate_clockwise(&mut self, transforms: &mut [Mut<Transform>]) {
         for transform in transforms.iter_mut() {
             let x = transform.translation.x;
             let y = transform.translation.y;
@@ -137,7 +137,7 @@ impl Shape {
     }
 
     // POSSIBLE BREAK -> CALLER DETERMINES WHAT TRANSFORMS TO ROTATE
-    pub fn rotate_counter_clockwise<'a>(&mut self, transforms: &mut [Mut<Transform>]) {
+    pub fn rotate_counter_clockwise(&mut self, transforms: &mut [Mut<Transform>]) {
         for transform in transforms.iter_mut() {
             let x = transform.translation.x;
             let y = transform.translation.y;

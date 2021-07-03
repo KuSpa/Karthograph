@@ -9,10 +9,6 @@ pub struct Season {
 }
 
 impl Season {
-    pub fn time(&self) -> i32 {
-        self.passed_time
-    }
-
     pub fn pass_time(&mut self, time: i32) {
         self.passed_time += time;
     }

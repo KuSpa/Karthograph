@@ -139,9 +139,8 @@ impl ShapeDefinition {
     fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
         let transform = Transform::from_xyz(0., 75., 0.1); // TODO REMOVE MAGIC NUMBERS
         let handle = assets.fetch(self.cultivation.into()).unwrap();
-        let mut children: Vec<Entity> = Default::default();
-        //Cultivation field
-        children.push(
+        let mut children: Vec<Entity> = vec![
+            //Cultivation field
             com.spawn()
                 .insert_bundle(SpriteBundle {
                     sprite: Sprite::new(Vec2::new(100., 100.)),
@@ -150,7 +149,7 @@ impl ShapeDefinition {
                     ..Default::default()
                 })
                 .id(),
-        );
+        ];
 
         // Geometry fields
 

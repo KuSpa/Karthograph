@@ -20,9 +20,9 @@ pub enum Cultivation {
     Goblin,
 }
 
-impl Into<&'static str> for Cultivation {
-    fn into(self) -> &'static str {
-        match self {
+impl From<Cultivation> for &'static str {
+    fn from(cult: Cultivation) -> &'static str {
+        match cult {
             Cultivation::Village => "village",
             Cultivation::Water => "water",
             Cultivation::Forest => "forest",
@@ -43,9 +43,10 @@ impl Default for Terrain {
         Terrain::Normal
     }
 }
-impl Into<&'static str> for Terrain {
-    fn into(self) -> &'static str {
-        match self {
+
+impl From<Terrain> for &'static str {
+    fn from(terrain: Terrain) -> &'static str {
+        match terrain {
             Terrain::Mountain => "mountain",
             Terrain::Normal => "default",
             Terrain::Ruin => "ruin",
@@ -110,22 +111,16 @@ impl Grid {
         if !self.inbound(coord) {
             return false;
         }
-        let ref field = self.inner[coord.x as usize][coord.y as usize];
+        let field = &self.inner[coord.x as usize][coord.y as usize];
         field.terrain != Terrain::Mountain && field.cultivation.is_none()
     }
 
     pub fn cultivate(&mut self, coord: &Coordinate, cultivation: &Cultivation) -> Entity {
         self.inner[coord.x as usize][coord.y as usize].cultivation = Some(*cultivation);
-        self.inner[coord.x as usize][coord.y as usize]
-            .entity
-            .clone()
+        self.inner[coord.x as usize][coord.y as usize].entity
     }
 
-    fn initialize(
-        com: &mut Commands,
-        ruins: &Vec<Coordinate>,
-        mountains: &Vec<Coordinate>,
-    ) -> Self {
+    fn initialize(com: &mut Commands, ruins: &[Coordinate], mountains: &[Coordinate]) -> Self {
         const SIZE: usize = GRID_SIZE as usize;
         let mut temp_vec: Vec<[Field; SIZE]> = Vec::default();
         for x in 0..GRID_SIZE {
