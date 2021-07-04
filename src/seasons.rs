@@ -1,6 +1,6 @@
-use bevy::prelude::{ResMut, State};
+use bevy::prelude::{Res, ResMut, State};
 
-use crate::GameState;
+use crate::{grid::Grid, objective::GameObjectives, GameState};
 
 #[derive(Default, Debug)]
 pub struct Season {
@@ -25,7 +25,7 @@ impl Season {
     }
 }
 #[derive(Debug)]
-enum SeasonType {
+pub enum SeasonType {
     Spring,
     Summer,
     Autumn,
@@ -58,8 +58,16 @@ impl Default for SeasonType {
     }
 }
 
-pub fn score_season(mut state: ResMut<State<GameState>>) {
-    /* TODO do */
+pub fn score_season(
+    mut state: ResMut<State<GameState>>,
+    season: Res<Season>,
+    objectives: Res<GameObjectives>,
+    grid: Res<Grid>,
+) {
+    let (first, second) = objectives.objectives_for_season(&season.season_type);
+    println!("{:?} scored {:?}", first.name(), first.score(&grid));
+    println!("{:?} scored {:?}", second.name(), second.score(&grid));
+    /* TODO: mountains, coins, UI */    
     state.pop().unwrap();
 }
 

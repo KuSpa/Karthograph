@@ -56,10 +56,10 @@ impl From<Terrain> for &'static str {
 
 #[derive(Debug)]
 pub struct Field {
-    cultivation: Option<Cultivation>,
+    pub cultivation: Option<Cultivation>,
     pub terrain: Terrain,
     pub entity: Entity, // TODO GETTER
-    position: Coordinate,
+    pub position: Coordinate,
 }
 pub struct FieldComponent;
 
@@ -165,6 +165,12 @@ impl Grid {
             IVec2::new(9, 8),
         ];
         Grid::initialize(com, &ruins, &mountains)
+    }
+
+    /*How would I implement this using IntoIter???*/
+    // TODO: make this a proper iter!
+    pub fn iter(&self) -> impl Iterator<Item = &Field> {
+        self.inner.iter().flat_map(|arr| arr.iter())
     }
 }
 

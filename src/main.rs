@@ -5,6 +5,7 @@ use card::{click_card, RuinIndicator};
 use card_pile::*;
 use grid::*;
 use mouse::*;
+use objective::GameObjectives;
 use seasons::{end_scoring, score_season, Season};
 use shape::*;
 use std::usize;
@@ -14,6 +15,7 @@ mod card;
 mod card_pile;
 mod grid;
 mod mouse;
+mod objective;
 mod seasons;
 mod shape;
 mod util;
@@ -26,6 +28,7 @@ pub const GRID_OFFSET: f32 = SPRITE_SIZE;
 fn main() {
     App::build()
         .insert_resource(AssetManager::default())
+        .insert_resource(GameObjectives::default())
         .insert_resource(Season::default())
         .insert_resource(RuinIndicator::default())
         .insert_resource(MousePosition::default())
