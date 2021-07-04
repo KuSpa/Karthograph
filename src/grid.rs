@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
-const GRID_SIZE: i32 = 11;
+const GRID_SIZE: usize = 11;
 //x=y offset
 const GRID_OFFSET: f32 = SPRITE_SIZE;
 pub type Coordinate = IVec2;
@@ -77,10 +77,12 @@ impl Field {
 #[derive(Debug)]
 pub struct Grid {
     pub entity: Entity,
-    pub inner: [[Field; GRID_SIZE as usize]; GRID_SIZE as usize],
+    inner: [Field; Grid::SIZE * Grid::SIZE],
 }
 
 impl Grid {
+    const SIZE: usize = GRID_SIZE as usize;
+
     pub fn screen_to_grid(mut position: Vec2) -> Coordinate {
         position.x -= GRID_OFFSET;
         position.y -= GRID_OFFSET;
@@ -89,11 +91,24 @@ impl Grid {
         IVec2::new(position.x as i32, position.y as i32)
     }
 
-    pub fn is_ruin(&self, coord: &Coordinate) -> bool {
-        if !self.inbound(&coord) {
-            return false;
+    fn index(&self, coord: &Coordinate) -> Result<usize, ()> {
+        if coord.x < 0
+            || coord.x >= Self::SIZE as i32
+            || coord.y < 0
+            || coord.y >= Self::SIZE as i32
+        {
+            Err(())
+        } else {
+            Ok((coord.x as usize) + (coord.y as usize) * Self::SIZE)
         }
-        self.inner[coord.x as usize][coord.y as usize].terrain == Terrain::Ruin
+    }
+
+    pub fn is_ruin(&self, coord: &Coordinate) -> bool {
+        if let Ok(index) = self.index(coord) {
+            self.inner[index].terrain == Terrain::Ruin
+        } else {
+            false
+        }
     }
 
     pub fn grid_to_screen(coord: Coordinate) -> Vec2 {
@@ -103,49 +118,51 @@ impl Grid {
         position
     }
 
-    fn inbound(&self, coord: &Coordinate) -> bool {
-        !(coord.x >= GRID_SIZE || coord.y >= GRID_SIZE || coord.x < 0 || coord.y < 0)
-    }
-
     pub fn is_free(&self, coord: &Coordinate) -> bool {
-        if !self.inbound(coord) {
-            return false;
+        if let Ok(index) = self.index(coord) {
+            let field = &self.inner[index];
+            field.terrain != Terrain::Mountain && field.cultivation.is_none()
+        } else {
+            false
         }
-        let field = &self.inner[coord.x as usize][coord.y as usize];
-        field.terrain != Terrain::Mountain && field.cultivation.is_none()
     }
 
     pub fn cultivate(&mut self, coord: &Coordinate, cultivation: &Cultivation) -> Entity {
-        self.inner[coord.x as usize][coord.y as usize].cultivation = Some(*cultivation);
-        self.inner[coord.x as usize][coord.y as usize].entity
+        let index = self.index(coord).unwrap();
+        self.inner[index].cultivation = Some(*cultivation);
+        self.inner[index].entity
     }
 
     fn initialize(com: &mut Commands, ruins: &[Coordinate], mountains: &[Coordinate]) -> Self {
-        const SIZE: usize = GRID_SIZE as usize;
-        let mut temp_vec: Vec<[Field; SIZE]> = Vec::default();
-        for x in 0..GRID_SIZE {
-            let mut col_vec: Vec<Field> = Vec::default();
-
-            for y in 0..GRID_SIZE {
+        let mut temp_vec: Vec<Field> = Vec::default();
+        for x in 0..Self::SIZE {
+            for y in 0..Self::SIZE {
                 let entity = com.spawn().id();
-                col_vec.push(Field::new(entity, Coordinate::new(x as i32, y as i32)));
+                temp_vec.push(Field::new(entity, Coordinate::new(x as i32, y as i32)));
             }
-            temp_vec.push(to_array::<Field, SIZE>(col_vec));
         }
         let entity = com.spawn().id();
         let mut grid = Grid {
             entity,
-            inner: to_array::<[Field; SIZE], SIZE>(temp_vec),
+            inner: to_array::<Field, { Self::SIZE * Self::SIZE }>(temp_vec),
         };
 
-        for &pos in mountains.iter() {
-            grid.inner[pos.x as usize][pos.y as usize].terrain = Terrain::Mountain;
+        for pos in mountains.iter() {
+            grid.inner[grid.index(&pos).unwrap()].terrain = Terrain::Mountain;
         }
 
         for pos in ruins.iter() {
-            grid.inner[pos.x as usize][pos.y as usize].terrain = Terrain::Ruin;
+            grid.inner[grid.index(&pos).unwrap()].terrain = Terrain::Ruin;
         }
         grid
+    }
+
+    pub fn at_mut(&mut self, coord: &Coordinate) -> Result<&mut Field, ()> {
+        self.index(&coord).map(move |i| &mut self.inner[i])
+    }
+
+    pub fn at(&self, coord: &Coordinate) -> Result<&Field, ()> {
+        self.index(&coord).map(|i| &self.inner[i])
     }
 
     pub fn new(com: &mut Commands) -> Self {
@@ -167,10 +184,18 @@ impl Grid {
         Grid::initialize(com, &ruins, &mountains)
     }
 
-    /*How would I implement this using IntoIter???*/
-    // TODO: make this a proper iter!
-    pub fn iter(&self) -> impl Iterator<Item = &Field> {
-        self.inner.iter().flat_map(|arr| arr.iter())
+    pub fn all(&self) -> impl Iterator<Item = &Field> {
+        self.inner.iter()
+    }
+
+    // use result for safety?
+    pub fn row(&self, nth: usize) -> impl Iterator<Item = &Field> {
+        self.inner.iter().skip(nth * Self::SIZE).take(Self::SIZE)
+    }
+
+    // use result for safety?
+    pub fn column(&self, nth: usize) -> impl Iterator<Item = &Field> {
+        self.inner.iter().skip(nth).step_by(Self::SIZE)
     }
 }
 
@@ -179,8 +204,9 @@ pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
 
     for x in 0..(GRID_SIZE as usize) {
         for y in 0..(GRID_SIZE as usize) {
-            let mat = assets.fetch(grid.inner[x][y].terrain.into()).unwrap();
-            let entity = grid.inner[x][y].entity;
+            let field = grid.at(&Coordinate::new(x as i32, y as i32)).unwrap();
+            let mat = assets.fetch(field.terrain.into()).unwrap();
+            let entity = field.entity;
             //THE FIELD OR THE GRID SHOULD DO THIS ITSELF
             com.entity(entity)
                 .insert(FieldComponent)
@@ -196,6 +222,5 @@ pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
                 });
         }
     }
-
     com.insert_resource(grid);
 }
