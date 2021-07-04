@@ -1,6 +1,9 @@
 use bevy::math::IVec2;
 
-use crate::{grid::{Cultivation, Grid}, seasons::SeasonType};
+use crate::{
+    grid::{Cultivation, Grid},
+    seasons::SeasonType,
+};
 
 /* I really like this too, but its unintuitive when reading
 struct Objective{scoring: fn(&Grid)->u32,}*/
@@ -14,9 +17,8 @@ pub trait Objective {
     fn score(&self, grid: &Grid) -> Score;
 }
 
-
 pub struct GameObjectives {
-    objectives: [Box<dyn Objective+Send+Sync>; 4],
+    objectives: [Box<dyn Objective + Send + Sync>; 4],
 }
 impl GameObjectives {
     pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
@@ -29,31 +31,43 @@ impl GameObjectives {
     }
 }
 
-impl Default for GameObjectives{
-	fn default() -> Self {
-		Self{objectives:[Box::new(DuesterWald),Box::new(DuesterWald),Box::new(DuesterWald),Box::new(DuesterWald)]}
-	}
+impl Default for GameObjectives {
+    fn default() -> Self {
+        Self {
+            objectives: [
+                Box::new(DuesterWald),
+                Box::new(DuesterWald),
+                Box::new(DuesterWald),
+                Box::new(DuesterWald),
+            ],
+        }
+    }
 }
 
 struct DuesterWald;
-impl Objective for DuesterWald{
-	fn name(&self) -> &'static str {
-		"Duesterwald"
-	}
-	fn score(&self, grid: &Grid) -> Score {
-		let mut count= 0;
-		for field in grid.all(){
-			if let Some(Cultivation::Forest) = field.cultivation{
-				let surrounding = vec![IVec2::new(1,0),IVec2::new(0,-1),IVec2::new(-1,0),IVec2::new(0,1)];
-				let mut free = false;
-				for offset in surrounding{
-					free = free || grid.is_free(&(field.position+offset))
-				}
-				if !free{
-					count +=1;
-				}
-			}
-		}
-		Score(count)
-	}
+impl Objective for DuesterWald {
+    fn name(&self) -> &'static str {
+        "Duesterwald"
+    }
+    fn score(&self, grid: &Grid) -> Score {
+        let mut count = 0;
+        for field in grid.all() {
+            if let Some(Cultivation::Forest) = field.cultivation {
+                let surrounding = vec![
+                    IVec2::new(1, 0),
+                    IVec2::new(0, -1),
+                    IVec2::new(-1, 0),
+                    IVec2::new(0, 1),
+                ];
+                let mut free = false;
+                for offset in surrounding {
+                    free = free || grid.is_free(&(field.position + offset))
+                }
+                if !free {
+                    count += 1;
+                }
+            }
+        }
+        Score(count)
+    }
 }

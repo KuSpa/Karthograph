@@ -67,7 +67,7 @@ pub fn score_season(
     let (first, second) = objectives.objectives_for_season(&season.season_type);
     println!("{:?} scored {:?}", first.name(), first.score(&grid));
     println!("{:?} scored {:?}", second.name(), second.score(&grid));
-    /* TODO: mountains, coins, UI */    
+    /* TODO: mountains, coins, UI */
     state.pop().unwrap();
 }
 
