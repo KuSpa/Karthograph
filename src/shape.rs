@@ -1,3 +1,4 @@
+use derive_deref::*;
 use serde::Deserialize;
 use std::ops::{Deref, DerefMut};
 
@@ -10,7 +11,7 @@ use bevy::input::mouse::{MouseButtonInput, MouseWheel};
 use bevy::prelude::*;
 //TODO MIRROR
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Deref, DerefMut)]
 pub struct Geometry {
     // TODO should this know the size its drawn??
     pub inner: Vec<Coordinate>,
@@ -18,13 +19,13 @@ pub struct Geometry {
 impl Geometry {
     pub fn rotate_clockwise(&mut self) {
         for position in self.iter_mut() {
-            *position = position.perp().perp().perp();
+            *position = position.perp().perp().perp().into();
         }
     }
 
     pub fn rotate_counter_clockwise(&mut self) {
         for position in self.iter_mut() {
-            *position = position.perp();
+            *position = position.perp().into();
         }
     }
 
@@ -48,8 +49,8 @@ impl Geometry {
         let mut max_v = IVec2::ZERO;
         let mut min_v = IVec2::ZERO;
         for coord in self.iter() {
-            min_v = min_v.min(*coord);
-            max_v = max_v.max(*coord);
+            min_v = min_v.min(coord.inner_copy());
+            max_v = max_v.max(coord.inner_copy());
         }
         (min_v, max_v)
     }
@@ -68,18 +69,6 @@ impl Geometry {
     }
 }
 
-impl Deref for Geometry {
-    type Target = Vec<Coordinate>;
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl DerefMut for Geometry {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
-}
 #[derive(Clone)]
 pub struct Shape {
     pub geometry: Geometry,
@@ -182,7 +171,7 @@ impl Shape {
 impl Default for Shape {
     fn default() -> Self {
         let geometry = Geometry {
-            inner: vec![IVec2::new(1, 0), IVec2::new(0, 1), IVec2::new(0, 0)],
+            inner: vec![(1, 0).into(), (0, 1).into(), (0, 0).into()],
         };
         Self {
             geometry,

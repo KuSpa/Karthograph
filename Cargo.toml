@@ -12,3 +12,4 @@ anyhow = "1.0"
 rand = "0.8.0"
 ron = "0.6.2"
 serde = {version = "1", features = ["derive"]}
+derive_deref= "1.1.1"

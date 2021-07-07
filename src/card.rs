@@ -2,6 +2,7 @@ use bevy::input::mouse::MouseButtonInput;
 use bevy::math::IVec2;
 use serde::Deserialize;
 
+use crate::grid::Coordinate;
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
 use crate::util::{contains_point, min_f};
@@ -291,7 +292,7 @@ impl SplinterDefinition {
     pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
         // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
         let geom = Geometry {
-            inner: vec![IVec2::new(0, 0)],
+            inner: vec![Coordinate::default()],
         };
         // TODO: remove magic numbers
         const SPLINTER_OFFSET: f32 = 75.;

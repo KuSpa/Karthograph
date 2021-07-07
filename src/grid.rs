@@ -1,14 +1,54 @@
 use crate::asset_management::AssetManager;
 use crate::util::to_array;
 use bevy::prelude::*;
+use derive_deref::*;
 use serde::Deserialize;
+use std::ops::Add;
 use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
 const GRID_SIZE: usize = 11;
 //x=y offset
 const GRID_OFFSET: f32 = SPRITE_SIZE;
-pub type Coordinate = IVec2;
+#[derive(Debug, Default, Clone, Copy, Deserialize, Deref, DerefMut)]
+pub struct Coordinate(IVec2);
+
+impl Coordinate {
+    pub fn inner_copy(&self) -> IVec2 {
+        self.0
+    }
+}
+
+impl From<(usize, usize)> for Coordinate {
+    fn from((x, y): (usize, usize)) -> Self {
+        Self(IVec2::new(x as i32, y as i32))
+    }
+}
+
+impl From<(i32, i32)> for Coordinate {
+    fn from((x, y): (i32, i32)) -> Self {
+        Self(IVec2::new(x, y))
+    }
+}
+
+impl From<IVec2> for Coordinate {
+    fn from(val: IVec2) -> Self {
+        Self(val)
+    }
+}
+
+impl From<Vec2> for Coordinate {
+    fn from(val: Vec2) -> Self {
+        Self(val.as_i32())
+    }
+}
+
+impl Add<Coordinate> for Coordinate {
+    type Output = Coordinate;
+    fn add(self, rhs: Coordinate) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 pub enum Cultivation {
@@ -88,7 +128,14 @@ impl Grid {
         position.y -= GRID_OFFSET;
         position /= SPRITE_SIZE;
         position = position.round();
-        IVec2::new(position.x as i32, position.y as i32)
+        position.into()
+    }
+
+    pub fn grid_to_screen(coord: Coordinate) -> Vec2 {
+        let mut position = Vec2::new(GRID_OFFSET, GRID_OFFSET);
+        position.x += coord.x as f32 * SPRITE_SIZE;
+        position.y += coord.y as f32 * SPRITE_SIZE;
+        position
     }
 
     fn index(&self, coord: &Coordinate) -> Result<usize, ()> {
@@ -111,13 +158,6 @@ impl Grid {
         }
     }
 
-    pub fn grid_to_screen(coord: Coordinate) -> Vec2 {
-        let mut position = Vec2::new(GRID_OFFSET, GRID_OFFSET);
-        position.x += coord.x as f32 * SPRITE_SIZE;
-        position.y += coord.y as f32 * SPRITE_SIZE;
-        position
-    }
-
     pub fn is_free(&self, coord: &Coordinate) -> bool {
         if let Ok(index) = self.index(coord) {
             let field = &self.inner[index];
@@ -138,7 +178,7 @@ impl Grid {
         for x in 0..Self::SIZE {
             for y in 0..Self::SIZE {
                 let entity = com.spawn().id();
-                temp_vec.push(Field::new(entity, Coordinate::new(x as i32, y as i32)));
+                temp_vec.push(Field::new(entity, (x, y).into()));
             }
         }
         let entity = com.spawn().id();
@@ -167,19 +207,19 @@ impl Grid {
 
     pub fn new(com: &mut Commands) -> Self {
         let mountains: Vec<Coordinate> = vec![
-            IVec2::new(2, 2),
-            IVec2::new(3, 9),
-            IVec2::new(5, 5),
-            IVec2::new(7, 1),
-            IVec2::new(8, 8),
+            (2, 2).into(),
+            (3, 9).into(),
+            (5, 5).into(),
+            (7, 1).into(),
+            (8, 8).into(),
         ]; //(x,y)
         let ruins: Vec<Coordinate> = vec![
-            IVec2::new(1, 2),
-            IVec2::new(1, 8),
-            IVec2::new(5, 1),
-            IVec2::new(5, 9),
-            IVec2::new(9, 2),
-            IVec2::new(9, 8),
+            (1, 2).into(),
+            (1, 8).into(),
+            (5, 1).into(),
+            (5, 9).into(),
+            (9, 2).into(),
+            (9, 8).into(),
         ];
         Grid::initialize(com, &ruins, &mountains)
     }
@@ -204,7 +244,7 @@ pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
 
     for x in 0..(GRID_SIZE as usize) {
         for y in 0..(GRID_SIZE as usize) {
-            let field = grid.at(&Coordinate::new(x as i32, y as i32)).unwrap();
+            let field = grid.at(&(x, y).into()).unwrap();
             let mat = assets.fetch(field.terrain.into()).unwrap();
             let entity = field.entity;
             //THE FIELD OR THE GRID SHOULD DO THIS ITSELF

@@ -53,12 +53,8 @@ impl Objective for DuesterWald {
         let mut count = 0;
         for field in grid.all() {
             if let Some(Cultivation::Forest) = field.cultivation {
-                let surrounding = vec![
-                    IVec2::new(1, 0),
-                    IVec2::new(0, -1),
-                    IVec2::new(-1, 0),
-                    IVec2::new(0, 1),
-                ];
+                let surrounding =
+                    vec![(1, 0).into(), (0, -1).into(), (-1, 0).into(), (0, 1).into()];
                 let mut free = false;
                 for offset in surrounding {
                     free = free || grid.is_free(&(field.position + offset))
