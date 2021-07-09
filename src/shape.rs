@@ -29,6 +29,12 @@ impl Geometry {
         }
     }
 
+    pub fn mirror(&mut self) {
+        for position in self.iter_mut() {
+            position.x = -position.x;
+        }
+    }
+
     pub fn as_transforms_centered(&self, distance: f32, z: f32) -> Vec<Transform> {
         let offset = self.center_offset();
         let mut transforms = self.as_transforms(distance, z);
@@ -86,7 +92,6 @@ impl Shape {
     }
 
     pub fn spawn(self, com: &mut Commands, assets: &Res<AssetManager>) -> Entity {
-        //TODO PROPER TEXTURE
         let handle = assets.fetch(self.cultivation.into()).unwrap();
 
         let mut children = Vec::<Entity>::new();
@@ -134,6 +139,13 @@ impl Shape {
             transform.translation.y = x;
         }
         self.geometry.rotate_counter_clockwise();
+    }
+
+    pub fn mirror(&mut self, transforms: &mut [Mut<Transform>]) {
+        for transform in transforms.iter_mut() {
+            transform.translation.x = -transform.translation.x
+        }
+        self.geometry.mirror();
     }
 
     fn is_placable(&self, grid: &Grid, coord: &Coordinate, ruin: bool) -> bool {
@@ -221,6 +233,26 @@ pub fn rotate_shape(
                 shape.rotate_clockwise(&mut transforms);
             } else {
                 shape.rotate_counter_clockwise(&mut transforms);
+            }
+        }
+    }
+}
+
+pub fn mirror_shape(
+    mut clicks: EventReader<MouseButtonInput>,
+    mut parents: Query<(Entity, &mut Shape)>,
+    mut query: Query<(&Parent, &mut Transform)>,
+) {
+    if let Ok((parent, mut shape)) = parents.single_mut() {
+        let mut transforms: Vec<Mut<Transform>> = query
+            .iter_mut()
+            .filter_map(|(Parent(ent), tr)| if *ent == parent { Some(tr) } else { None })
+            .collect();
+
+        for event in clicks.iter() {
+            //calculate the closest cell
+            if event.button == MouseButton::Middle && event.state.is_pressed() {
+                shape.mirror(&mut transforms);
             }
         }
     }

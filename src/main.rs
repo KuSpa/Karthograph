@@ -52,6 +52,7 @@ fn main() {
             SystemSet::on_update(GameState::SeasonState)
                 .with_system(next_card.system())
                 .with_system(move_shape.system())
+                .with_system(mirror_shape.system())
                 .with_system(rotate_shape.system())
                 .with_system(place_shape.system())
                 .with_system(mouse_position.system())
