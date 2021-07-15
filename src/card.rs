@@ -1,8 +1,8 @@
 use bevy::input::mouse::MouseButtonInput;
-use bevy::math::IVec2;
+use derive_deref::*;
 use serde::Deserialize;
 
-use crate::grid::Coordinate;
+use crate::grid::{Coordinate, Grid};
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
 use crate::util::{contains_point, min_f};
@@ -25,7 +25,7 @@ pub enum CardClickEvent {
     Ruin,
 }
 
-#[derive(Default)]
+#[derive(Default, Deref, Clone, Copy)]
 pub struct RuinIndicator {
     inner: bool,
 }
@@ -38,14 +38,16 @@ impl RuinIndicator {
     pub fn reset(&mut self) {
         self.inner = false;
     }
+}
 
-    pub fn value(&self) -> bool {
-        self.inner
+impl From<bool> for RuinIndicator {
+    fn from(inner: bool) -> Self {
+        Self { inner }
     }
 }
 
 impl Card {
-    pub fn spawn(self, com: &mut Commands, assets: &AssetManager, ruin: bool) {
+    pub fn spawn(self, com: &mut Commands, assets: &AssetManager, ruin: &RuinIndicator) {
         let handle = assets.fetch("blank_card").unwrap(); // TODO MAKE ME SAFE AND SOUND
         let transform = Transform::from_xyz(
             GRID_SIZE as f32 * SPRITE_SIZE + GRID_OFFSET * 2. + 100.,
@@ -90,6 +92,15 @@ impl Card {
             Card::Ruin(def) => def.spawn(com, entity, &assets),
         }
         com.entity(entity).insert(self);
+    }
+
+    pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
+        match &self {
+            Self::Ruin(_) => true,
+            Self::Splinter(def) => def.is_placable(&grid, &ruin),
+            Self::Shape(def) => def.is_placable(&grid, ruin),
+            Self::Cultivation(def) => def.is_placable(&grid, &ruin),
+        }
     }
 
     pub fn time(&self) -> i32 {
@@ -137,7 +148,13 @@ pub struct ShapeDefinition {
 }
 
 impl ShapeDefinition {
-    fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
+    fn spawn(
+        &self,
+        com: &mut Commands,
+        parent: Entity,
+        assets: &AssetManager,
+        ruin: &RuinIndicator,
+    ) {
         let transform = Transform::from_xyz(0., 75., 0.1); // TODO REMOVE MAGIC NUMBERS
         let handle = assets.fetch(self.cultivation.into()).unwrap();
         let mut children: Vec<Entity> = vec![
@@ -219,6 +236,10 @@ impl ShapeDefinition {
 
         com.entity(parent).push_children(&children);
     }
+
+    pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
+        self.left.is_placable(grid, ruin) || self.right.is_placable(&grid, &ruin)
+    }
 }
 #[derive(Deserialize, Clone)]
 pub struct CultivationDefinition {
@@ -228,7 +249,13 @@ pub struct CultivationDefinition {
 }
 
 impl CultivationDefinition {
-    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
+    pub fn spawn(
+        &self,
+        com: &mut Commands,
+        parent: Entity,
+        assets: &AssetManager,
+        ruin: &RuinIndicator,
+    ) {
         let top_offset = Vec3::new(0., 75., 0.1);
         let top_window = Vec2::new(200., 125.); //TODO REMOVE MAGIC numbers
         let square_size = self.geometry.max_size_in_rect(top_window);
@@ -285,11 +312,21 @@ impl CultivationDefinition {
         );
         com.entity(parent).push_children(&children);
     }
+
+    fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
+        self.geometry.is_placable(&grid, &ruin)
+    }
 }
 #[derive(Deserialize, Clone)]
 pub struct SplinterDefinition;
 impl SplinterDefinition {
-    pub fn spawn(&self, com: &mut Commands, parent: Entity, assets: &AssetManager, ruin: bool) {
+    pub fn spawn(
+        &self,
+        com: &mut Commands,
+        parent: Entity,
+        assets: &AssetManager,
+        ruin: &RuinIndicator,
+    ) {
         // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
         let geom = Geometry {
             inner: vec![Coordinate::default()],
@@ -334,6 +371,13 @@ impl SplinterDefinition {
             })
             .collect();
         com.entity(parent).push_children(&children);
+    }
+
+    fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
+        Geometry {
+            inner: vec![(0, 0).into()],
+        }
+        .is_placable(&grid, &ruin)
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::{
     asset_management::AssetManager,
     card::{Card, RuinIndicator},
+    grid::Grid,
     seasons::Season,
     GameState,
 };
@@ -51,6 +52,7 @@ impl Default for CardPile {
 pub fn next_card(
     mut com: Commands,
     active_card: Query<&Card>,
+    grid: Res<Grid>,
     mut current_season: ResMut<Season>,
     mut card_pile: Query<&mut CardPile>,
     mut ruin: ResMut<RuinIndicator>,
@@ -66,10 +68,17 @@ pub fn next_card(
                 state.push(GameState::SeasonScoreState).unwrap();
                 return;
             }
-            if let Some(card) = pile.cards.pop() {
-                //time is added before cards are placed
+            if let Some(mut card) = pile.cards.pop() {
+                // time is added before cards are placed
                 current_season.pass_time(card.time());
-                card.spawn(&mut com, &assets, ruin.value());
+                // test whether you can play this card
+                if !card.is_placable(&grid, &ruin) {
+                    println!("Card cannot be placed, fallback to default splinter card");
+                    card = Card::default();
+                    ruin.reset(); // if card is replaced, it does not need to be placed on ruins
+                }
+
+                card.spawn(&mut com, &assets, &ruin);
                 ruin.reset();
             }
         }

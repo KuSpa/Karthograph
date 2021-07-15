@@ -1,5 +1,3 @@
-use bevy::math::IVec2;
-
 use crate::{
     grid::{Cultivation, Grid},
     seasons::SeasonType,
