@@ -50,7 +50,7 @@ impl Objective for DuesterWald {
     fn score(&self, grid: &Grid) -> Score {
         let mut count = 0;
         for field in grid.all() {
-            if let Some(Cultivation::Forest) = field.cultivation {
+            if let Some(Cultivation::Forest) = field.cultivation.map(|info| info.cultivation) {
                 let surrounding =
                     vec![(1, 0).into(), (0, -1).into(), (-1, 0).into(), (0, 1).into()];
                 let mut free = false;

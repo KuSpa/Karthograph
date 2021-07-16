@@ -2,10 +2,12 @@ use crate::asset_management::AssetManager;
 use crate::card::RuinIndicator;
 use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
+use bevy::math::i32;
 use bevy::prelude::*;
 use derive_deref::*;
 use serde::Deserialize;
-use std::ops::Add;
+use std::collections::VecDeque;
+use std::ops::{Add, RangeFrom};
 use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
@@ -52,7 +54,7 @@ impl Add<Coordinate> for Coordinate {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
 pub enum Cultivation {
     //Add a None type??
     Village,
@@ -97,18 +99,28 @@ impl From<Terrain> for &'static str {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct AreaInformation {
+pub struct CultivationInformation {
+    pub cultivation: Cultivation,
     pub area_id: usize,
     pub size: usize,
 }
 
+impl From<Cultivation> for CultivationInformation {
+    fn from(c: Cultivation) -> Self {
+        Self {
+            cultivation: c,
+            area_id: 0,
+            size: 0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Field {
-    pub cultivation: Option<Cultivation>,
+    pub cultivation: Option<CultivationInformation>,
     pub terrain: Terrain,
     pub entity: Entity, // TODO GETTER
     pub position: Coordinate,
-    area_id: Option<AreaInformation>,
 }
 pub struct FieldComponent;
 
@@ -119,7 +131,6 @@ impl Field {
             terrain: Terrain::default(),
             cultivation: Option::default(),
             position,
-            area_id: None,
         }
     }
 }
@@ -127,6 +138,7 @@ impl Field {
 #[derive(Debug)]
 pub struct Grid {
     pub entity: Entity,
+    area_counter: RangeFrom<usize>,
     inner: [Field; Grid::SIZE * Grid::SIZE],
 }
 
@@ -148,12 +160,15 @@ impl Grid {
         position
     }
 
-    fn index(&self, coord: &Coordinate) -> Result<usize, ()> {
-        if coord.x < 0
+    fn is_valid_coord(&self, coord: &Coordinate) -> bool {
+        !(coord.x < 0
             || coord.x >= Self::SIZE as i32
             || coord.y < 0
-            || coord.y >= Self::SIZE as i32
-        {
+            || coord.y >= Self::SIZE as i32)
+    }
+
+    fn index(&self, coord: &Coordinate) -> Result<usize, ()> {
+        if !self.is_valid_coord(&coord) {
             Err(())
         } else {
             Ok((coord.x as usize) + (coord.y as usize) * Self::SIZE)
@@ -181,10 +196,68 @@ impl Grid {
         let mut entities = Vec::default();
         for position in shape.geometry.iter() {
             let mut field = self.at_mut(&(*coord + *position)).unwrap();
-            field.cultivation = Some(shape.cultivation);
+            field.cultivation = Some(shape.cultivation.into());
             entities.push(field.entity);
         }
+
+        //safe, we count to infinity or max grid fields
+        let id = self.area_counter.next().unwrap();
+        self.propagate_id(&coord, id, &shape.cultivation);
+
         entities
+    }
+
+    fn propagate_id(&mut self, coord: &Coordinate, id: usize, cultivation: &Cultivation) {
+        let mut queue = VecDeque::new();
+        let mut fields = Vec::new();
+        queue.push_front(*coord);
+        while let Some(pos) = queue.pop_back() {
+            fields.push(pos);
+
+            //set current to
+
+            // non valid `pos` are not added to the queue
+            self.at_mut(&pos)
+                .as_mut()
+                .unwrap()
+                .cultivation
+                .as_mut()
+                .unwrap()
+                .area_id = id;
+
+            for neighbor_pos in self.neighbor_indices(&pos) {
+                let field = self.at(&neighbor_pos).unwrap();
+
+                if let Some(area_info) = field.cultivation {
+                    if area_info.area_id < id && area_info.cultivation == *cultivation {
+                        queue.push_front(neighbor_pos);
+                    }
+                }
+            }
+        }
+
+        let size = fields.len();
+        for field_pos in fields {
+            self.at_mut(&field_pos)
+                .as_mut()
+                .unwrap()
+                .cultivation
+                .as_mut()
+                .unwrap()
+                .size = size;
+        }
+    }
+
+    // I would like to have an iterator to `&Field` here, but then I would have to `split` which is unpleasant, so this has to suffice :(
+    fn neighbor_indices(&self, coord: &Coordinate) -> Vec<Coordinate> {
+        let top = *coord + (0, 1).into();
+        let bottom = *coord + (0, -1).into();
+        let right = *coord + (1, 0).into();
+        let left = *coord + (-1, 0).into();
+        vec![top, bottom, right, left]
+            .into_iter()
+            .filter(|c| self.is_valid_coord(&c))
+            .collect()
     }
 
     pub fn accepts_geometry(&self, geom: &Geometry, ruins: &RuinIndicator) -> bool {
@@ -246,6 +319,7 @@ impl Grid {
         let entity = com.spawn().id();
         let mut grid = Grid {
             entity,
+            area_counter: 1..,
             inner: to_array::<Field, { Self::SIZE * Self::SIZE }>(temp_vec),
         };
 
