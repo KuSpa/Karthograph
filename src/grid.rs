@@ -1,4 +1,6 @@
 use crate::asset_management::AssetManager;
+use crate::card::RuinIndicator;
+use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
 use bevy::prelude::*;
 use derive_deref::*;
@@ -94,12 +96,19 @@ impl From<Terrain> for &'static str {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct AreaInformation {
+    pub area_id: usize,
+    pub size: usize,
+}
+
 #[derive(Debug)]
 pub struct Field {
     pub cultivation: Option<Cultivation>,
     pub terrain: Terrain,
     pub entity: Entity, // TODO GETTER
     pub position: Coordinate,
+    area_id: Option<AreaInformation>,
 }
 pub struct FieldComponent;
 
@@ -110,6 +119,7 @@ impl Field {
             terrain: Terrain::default(),
             cultivation: Option::default(),
             position,
+            area_id: None,
         }
     }
 }
@@ -167,10 +177,62 @@ impl Grid {
         }
     }
 
-    pub fn cultivate(&mut self, coord: &Coordinate, cultivation: &Cultivation) -> Entity {
-        let index = self.index(coord).unwrap();
-        self.inner[index].cultivation = Some(*cultivation);
-        self.inner[index].entity
+    fn cultivate(&mut self, shape: &Shape, coord: &Coordinate) -> Vec<Entity> {
+        let mut entities = Vec::default();
+        for position in shape.geometry.iter() {
+            let mut field = self.at_mut(&(*coord + *position)).unwrap();
+            field.cultivation = Some(shape.cultivation);
+            entities.push(field.entity);
+        }
+        entities
+    }
+
+    pub fn accepts_geometry(&self, geom: &Geometry, ruins: &RuinIndicator) -> bool {
+        // little bit ugly as the grid assumes knowledge on what orientations the geometry can have, but hm
+        let mut mirrored = geom.clone();
+        mirrored.mirror();
+        for mut geom in [geom.clone(), mirrored] {
+            for _ in 0..4 {
+                for field in self.all() {
+                    if self.accepts_geometry_at(&geom, &field.position, &ruins) {
+                        return true;
+                    }
+                }
+                geom.rotate_clockwise();
+            }
+        }
+        false
+    }
+
+    pub fn accepts_geometry_at(
+        &self,
+        geom: &Geometry,
+        coord: &Coordinate,
+        ruins: &RuinIndicator,
+    ) -> bool {
+        let mut on_ruin = false;
+        for &pos in geom.iter() {
+            if self.is_ruin(&(pos + *coord)) {
+                on_ruin = true;
+            }
+            if !self.is_free(&(pos + *coord)) {
+                return false;
+            }
+        }
+        // == !(ruin && !on_ruin) <= if it SHOULD be on a ruin, but is NOT, then return false
+        !(**ruins) || on_ruin
+    }
+
+    pub fn try_cultivate(
+        &mut self,
+        shape: &Shape,
+        coord: &Coordinate,
+    ) -> Result<Vec<Entity>, &'static str> {
+        if self.accepts_geometry_at(&shape.geometry, &coord, &shape.ruin) {
+            Ok(self.cultivate(&shape, &coord))
+        } else {
+            Err("Can't place the shape here")
+        }
     }
 
     fn initialize(com: &mut Commands, ruins: &[Coordinate], mountains: &[Coordinate]) -> Self {

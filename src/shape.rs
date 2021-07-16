@@ -72,41 +72,6 @@ impl Geometry {
         let offset = max_v.as_f32() - (max_v.as_f32() - min_v.as_f32()) / 2.;
         Vec3::new(offset.x as f32, offset.y as f32, 0.)
     }
-
-    pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        let mut mirrored = self.clone();
-        mirrored.mirror();
-        for mut geom in [self.clone(), mirrored] {
-            for _ in 0..4 {
-                for field in grid.all() {
-                    if geom.is_placable_in_position(&grid, &field.position, &ruin) {
-                        return true;
-                    }
-                }
-                geom.rotate_clockwise();
-            }
-        }
-        false
-    }
-
-    pub fn is_placable_in_position(
-        &self,
-        grid: &Grid,
-        coord: &Coordinate,
-        ruin: &RuinIndicator,
-    ) -> bool {
-        let mut on_ruin = false;
-        for &pos in self.iter() {
-            if grid.is_ruin(&(pos + *coord)) {
-                on_ruin = true;
-            }
-            if !grid.is_free(&(pos + *coord)) {
-                return false;
-            }
-        }
-        // == !(ruin && !on_ruin) <= if it SHOULD be on a ruin, but is NOT, then return false
-        !(**ruin) || on_ruin
-    }
 }
 
 #[derive(Clone)]
@@ -181,25 +146,6 @@ impl Shape {
         }
         self.geometry.mirror();
     }
-
-    fn try_place(
-        &self,
-        grid: &mut Grid,
-        position: &Coordinate,
-    ) -> Result<Vec<Entity>, &'static str> {
-        //return an error(?)
-        if !self
-            .geometry
-            .is_placable_in_position(&grid, &position, &self.ruin)
-        {
-            return Err("Can't place the shape here");
-        }
-        Ok(self
-            .geometry
-            .iter()
-            .map(|&pos| grid.cultivate(&(pos + *position), &self.cultivation))
-            .collect())
-    }
 }
 
 impl Default for Shape {
@@ -226,10 +172,7 @@ pub fn move_shape(
             //calculate the closest cell
             let mut position = event.position;
             let grid_pos = Grid::screen_to_grid(position);
-            if shape
-                .geometry
-                .is_placable_in_position(&grid, &grid_pos, &shape.ruin)
-            {
+            if grid.accepts_geometry_at(&shape.geometry, &grid_pos, &shape.ruin) {
                 position = Grid::grid_to_screen(grid_pos);
             }
             // IF CANNOT PLACE => DONT MOVE
@@ -297,7 +240,7 @@ pub fn place_shape(
             if let Ok((t_entity, shape, transform)) = shapes.single() {
                 let position = Vec2::new(transform.translation.x, transform.translation.y);
                 let grid_position = Grid::screen_to_grid(position);
-                if let Ok(entities) = shape.try_place(&mut grid, &grid_position) {
+                if let Ok(entities) = grid.try_cultivate(&shape, &grid_position) {
                     // Well we got through all the ifs and if lets, it's time to DO SOME STUFF
                     for &entity in entities.iter() {
                         let (_, mut handle) = fields.get_mut(entity).unwrap();

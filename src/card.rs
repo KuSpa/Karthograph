@@ -238,7 +238,7 @@ impl ShapeDefinition {
     }
 
     pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        self.left.is_placable(grid, ruin) || self.right.is_placable(&grid, &ruin)
+        grid.accepts_geometry(&self.left, &ruin) || grid.accepts_geometry(&self.right, &ruin)
     }
 }
 #[derive(Deserialize, Clone)]
@@ -314,7 +314,7 @@ impl CultivationDefinition {
     }
 
     fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        self.geometry.is_placable(&grid, &ruin)
+        grid.accepts_geometry(&self.geometry, &ruin)
     }
 }
 #[derive(Deserialize, Clone)]
@@ -374,10 +374,10 @@ impl SplinterDefinition {
     }
 
     fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        Geometry {
+        let geom = Geometry {
             inner: vec![(0, 0).into()],
-        }
-        .is_placable(&grid, &ruin)
+        };
+        grid.accepts_geometry(&geom, &ruin)
     }
 }
 
