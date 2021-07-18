@@ -1,4 +1,5 @@
 use crate::{
+    asset_management::AssetID,
     grid::{Cultivation, Grid},
     seasons::{Season, SeasonType},
 };
@@ -9,7 +10,7 @@ struct Objective{scoring: fn(&Grid)->u32,}*/
 #[derive(Debug)]
 pub struct Score(usize);
 
-pub trait Objective {
+pub trait Objective: AssetID {
     fn name(&self) -> &'static str;
     //fn description(&self) -> &'static str;
     fn score(&self, grid: &Grid) -> Score;
@@ -43,6 +44,13 @@ impl Default for GameObjectives {
 }
 
 struct DuesterWald;
+
+impl AssetID for DuesterWald {
+    fn asset_id(&self) -> &'static str {
+        "duesterwald"
+    }
+}
+
 impl Objective for DuesterWald {
     fn name(&self) -> &'static str {
         "Duesterwald"

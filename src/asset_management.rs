@@ -57,6 +57,10 @@ impl AssetManager {
     }
 }
 
+pub trait AssetID {
+    fn asset_id(&self) -> &'static str;
+}
+
 pub fn init_assets(
     mut asset_manager: ResMut<AssetManager>,
     asset_server: Res<AssetServer>,
