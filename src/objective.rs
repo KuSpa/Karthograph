@@ -50,12 +50,14 @@ impl Objective for DuesterWald {
     fn score(&self, grid: &Grid) -> Score {
         let mut count = 0;
         for field in grid.all() {
-            if let Some(Cultivation::Forest) = field.cultivation.map(|info| info.cultivation) {
+            if let Some(Cultivation::Forest) =
+                field.cultivation.as_ref().map(|info| info.cultivation())
+            {
                 let surrounding =
                     vec![(1, 0).into(), (0, -1).into(), (-1, 0).into(), (0, 1).into()];
                 let mut free = false;
                 for offset in surrounding {
-                    free = free || grid.is_free(&(field.position + offset))
+                    free = free || grid.is_free(&(field.position() + offset))
                 }
                 if !free {
                     count += 1;

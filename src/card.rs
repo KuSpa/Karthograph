@@ -2,7 +2,7 @@ use bevy::input::mouse::MouseButtonInput;
 use derive_deref::*;
 use serde::Deserialize;
 
-use crate::grid::{Coordinate, Grid};
+use crate::grid::Grid;
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
 use crate::util::{contains_point, min_f};

@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::asset_management::AssetManager;
 use crate::card::{Card, RuinIndicator};
-use crate::grid::{Coordinate, Cultivation, FieldComponent, Grid};
+use crate::grid::{Coordinate, Cultivation, Grid};
 use crate::util::min_f;
 use crate::SPRITE_SIZE;
 use bevy::input::mouse::{MouseButtonInput, MouseWheel};
@@ -255,19 +255,15 @@ pub fn place_shape(
     card: Query<(Entity, &Card)>,
     mut clicks: EventReader<MouseButtonInput>,
     assets: Res<AssetManager>,
-    mut fields: Query<(&FieldComponent, &mut Handle<ColorMaterial>)>,
+    mut handles: Query<&mut Handle<ColorMaterial>>,
 ) {
     for event in clicks.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
             if let Ok((t_entity, shape, transform)) = shapes.single() {
                 let position = Vec2::new(transform.translation.x, transform.translation.y);
                 let grid_position = Grid::screen_to_grid(position);
-                if let Ok(entities) = grid.try_cultivate(&shape, &grid_position) {
-                    // Well we got through all the ifs and if lets, it's time to DO SOME STUFF
-                    for &entity in entities.iter() {
-                        let (_, mut handle) = fields.get_mut(entity).unwrap();
-                        *handle = assets.fetch(shape.cultivation.into()).unwrap();
-                    }
+                if let Ok(()) = grid.try_cultivate(&shape, &grid_position, &assets, &mut handles) {
+                    // the magic happens in try_cultivate, if this is successful, all thats left to do is to despawn the shape and the card
                     com.entity(t_entity).despawn_recursive();
                     if let Ok((card_entity, _)) = card.single() {
                         com.entity(card_entity).despawn_recursive();
