@@ -28,6 +28,7 @@ pub const GRID_OFFSET: f32 = SPRITE_SIZE;
 fn main() {
     App::build()
         .insert_resource(AssetManager::default())
+        .add_event::<NewCard>()
         .insert_resource(GameObjectives::default())
         .insert_resource(Season::default())
         .insert_resource(RuinIndicator::default())
@@ -59,7 +60,7 @@ fn main() {
                 .with_system(click_card.system()),
         )
         .add_system_set(
-            SystemSet::on_update(GameState::SeasonScoreState).with_system(score_season.system()),
+            SystemSet::on_enter(GameState::SeasonScoreState).with_system(score_season.system()),
         )
         .add_system_set(
             SystemSet::on_exit(GameState::SeasonScoreState).with_system(end_scoring.system()),

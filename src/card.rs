@@ -2,6 +2,7 @@ use bevy::input::mouse::MouseButtonInput;
 use derive_deref::*;
 use serde::Deserialize;
 
+use crate::card_pile::NewCard;
 use crate::grid::Grid;
 use crate::mouse::MousePosition;
 use crate::shape::{Geometry, Shape};
@@ -385,6 +386,7 @@ pub fn click_card(
     mut ruin: ResMut<RuinIndicator>,
     position: Res<MousePosition>,
     assets: Res<AssetManager>,
+    mut next_card: EventWriter<NewCard>,
 ) {
     for event in events.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
@@ -405,7 +407,8 @@ pub fn click_card(
                         }
                         CardClickEvent::Ruin => {
                             com.entity(entity).despawn_recursive();
-                            ruin.set()
+                            ruin.set();
+                            next_card.send(NewCard)
                         }
                     };
                     return;
