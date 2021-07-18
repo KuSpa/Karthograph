@@ -1,7 +1,7 @@
 use derive_deref::*;
 use serde::Deserialize;
 
-use crate::asset_management::AssetManager;
+use crate::asset_management::{AssetID, AssetManager};
 use crate::card::{Card, RuinIndicator};
 use crate::card_pile::NewCard;
 use crate::grid::{Coordinate, Cultivation, Grid};
@@ -114,7 +114,7 @@ impl Shape {
     }
 
     pub fn spawn(self, com: &mut Commands, assets: &Res<AssetManager>) -> Entity {
-        let handle = assets.fetch(self.cultivation.into()).unwrap();
+        let handle = assets.fetch(self.cultivation.asset_id()).unwrap();
 
         let mut children = Vec::<Entity>::new();
         let mat = handle;

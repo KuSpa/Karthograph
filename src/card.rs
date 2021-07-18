@@ -2,6 +2,7 @@ use bevy::input::mouse::MouseButtonInput;
 use derive_deref::*;
 use serde::Deserialize;
 
+use crate::asset_management::AssetID;
 use crate::card_pile::NewCard;
 use crate::grid::Grid;
 use crate::mouse::MousePosition;
@@ -157,7 +158,7 @@ impl ShapeDefinition {
         ruin: &RuinIndicator,
     ) {
         let transform = Transform::from_xyz(0., 75., 0.1); // TODO REMOVE MAGIC NUMBERS
-        let handle = assets.fetch(self.cultivation.into()).unwrap();
+        let handle = assets.fetch(self.cultivation.asset_id()).unwrap();
         let mut children: Vec<Entity> = vec![
             //Cultivation field
             com.spawn()
@@ -284,7 +285,7 @@ impl CultivationDefinition {
         // Cultivation children
         let left_transform = Transform::from_xyz(-50., -50., 0.1);
         let left_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin));
-        let left_mat = assets.fetch(self.left.into()).unwrap();
+        let left_mat = assets.fetch(self.left.asset_id()).unwrap();
         children.push(
             com.spawn()
                 .insert_bundle(SpriteBundle {
@@ -299,7 +300,7 @@ impl CultivationDefinition {
 
         let right_transform = Transform::from_xyz(50., -50., 0.1);
         let right_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.right, ruin));
-        let right_mat = assets.fetch(self.right.into()).unwrap();
+        let right_mat = assets.fetch(self.right.asset_id()).unwrap();
         children.push(
             com.spawn()
                 .insert_bundle(SpriteBundle {
@@ -358,7 +359,7 @@ impl SplinterDefinition {
         let children: Vec<Entity> = shapes
             .iter()
             .map(|(shape, transform)| {
-                let material = assets.fetch(shape.cultivation().into()).unwrap();
+                let material = assets.fetch(shape.cultivation().asset_id()).unwrap();
                 com.spawn()
                     .insert_bundle(SpriteBundle {
                         sprite: Sprite::new(Vec2::new(50., 50.)),

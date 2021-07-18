@@ -1,4 +1,4 @@
-use crate::asset_management::AssetManager;
+use crate::asset_management::{AssetID, AssetManager};
 use crate::card::RuinIndicator;
 use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
@@ -64,9 +64,9 @@ pub enum Cultivation {
     Goblin,
 }
 
-impl From<Cultivation> for &'static str {
-    fn from(cult: Cultivation) -> &'static str {
-        match cult {
+impl AssetID for Cultivation {
+    fn asset_id(&self) -> &'static str {
+        match self {
             Cultivation::Village => "village",
             Cultivation::Water => "water",
             Cultivation::Forest => "forest",
@@ -88,9 +88,9 @@ impl Default for Terrain {
     }
 }
 
-impl From<Terrain> for &'static str {
-    fn from(terrain: Terrain) -> &'static str {
-        match terrain {
+impl AssetID for Terrain {
+    fn asset_id(&self) -> &'static str {
+        match self {
             Terrain::Mountain => "mountain",
             Terrain::Normal => "default",
             Terrain::Ruin => "ruin",
@@ -228,7 +228,7 @@ impl Grid {
             let mut field = self.at_mut(&(*coord + *position)).unwrap();
             field.cultivation = Some(shape.cultivation().into());
             let mut handle = handles.get_mut(field.entity).unwrap();
-            *handle = assets.fetch(shape.cultivation().into()).unwrap();
+            *handle = assets.fetch(shape.cultivation().asset_id()).unwrap();
         }
 
         let id = self.area_counter.next().unwrap();
@@ -397,7 +397,7 @@ pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
     for x in 0..(GRID_SIZE as usize) {
         for y in 0..(GRID_SIZE as usize) {
             let field = grid.at(&(x, y).into()).unwrap();
-            let mat = assets.fetch(field.terrain.into()).unwrap();
+            let mat = assets.fetch(field.terrain.asset_id()).unwrap();
             let entity = field.entity;
             //THE FIELD OR THE GRID SHOULD DO THIS ITSELF
             com.entity(entity)
