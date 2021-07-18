@@ -12,8 +12,7 @@ use bevy::prelude::*;
 
 #[derive(Clone, Deserialize, Deref, DerefMut)]
 pub struct Geometry {
-    // TODO should this know the size its drawn??
-    pub inner: Vec<Coordinate>,
+    inner: Vec<Coordinate>,
 }
 impl Geometry {
     pub fn rotate_clockwise(&mut self) {
@@ -74,11 +73,20 @@ impl Geometry {
     }
 }
 
+impl Default for Geometry {
+    //Geometries are non empty
+    fn default() -> Self {
+        Self {
+            inner: vec![Coordinate::default()],
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Shape {
-    pub geometry: Geometry,
-    pub cultivation: Cultivation,
-    pub ruin: RuinIndicator,
+    geometry: Geometry,
+    cultivation: Cultivation,
+    ruin: RuinIndicator,
 }
 
 impl Shape {
@@ -88,6 +96,20 @@ impl Shape {
             cultivation: *cult,
             ruin: *ruin,
         }
+    }
+
+    pub fn geometry(&self) -> &Geometry {
+        &self.geometry
+    }
+
+    // const, once the Shape was created, so copy is ok
+    pub fn cultivation(&self) -> Cultivation {
+        self.cultivation
+    }
+
+    // const, once the Shape was created, so copy is ok
+    pub fn ruin(&self) -> RuinIndicator {
+        self.ruin
     }
 
     pub fn spawn(self, com: &mut Commands, assets: &Res<AssetManager>) -> Entity {

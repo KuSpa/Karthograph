@@ -328,9 +328,8 @@ impl SplinterDefinition {
         ruin: &RuinIndicator,
     ) {
         // we just have a 5 choice Cultivation card with a geometry of [(0,0)]
-        let geom = Geometry {
-            inner: vec![Coordinate::default()],
-        };
+        let geom = Geometry::default();
+
         // TODO: remove magic numbers
         const SPLINTER_OFFSET: f32 = 75.;
         let shapes = vec![
@@ -358,7 +357,7 @@ impl SplinterDefinition {
         let children: Vec<Entity> = shapes
             .iter()
             .map(|(shape, transform)| {
-                let material = assets.fetch(shape.cultivation.into()).unwrap();
+                let material = assets.fetch(shape.cultivation().into()).unwrap();
                 com.spawn()
                     .insert_bundle(SpriteBundle {
                         sprite: Sprite::new(Vec2::new(50., 50.)),
@@ -374,10 +373,7 @@ impl SplinterDefinition {
     }
 
     fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        let geom = Geometry {
-            inner: vec![(0, 0).into()],
-        };
-        grid.accepts_geometry(&geom, &ruin)
+        grid.accepts_geometry(&Geometry::default(), &ruin)
     }
 }
 
