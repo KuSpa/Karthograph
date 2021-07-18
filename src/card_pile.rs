@@ -20,6 +20,12 @@ pub struct CardPile {
     pub cards: Vec<Card>,
 }
 
+impl CardPile {
+    fn shuffle(&mut self) {
+        self.cards.shuffle(&mut thread_rng())
+    }
+}
+
 #[derive(Default)]
 pub struct CardPileLoader;
 
@@ -49,57 +55,51 @@ impl Default for CardPile {
     }
 }
 
+pub struct NewCard;
+
 pub fn next_card(
     mut com: Commands,
-    active_card: Query<&Card>,
+    mut reader: EventReader<NewCard>,
     grid: Res<Grid>,
     mut current_season: ResMut<Season>,
-    mut card_pile: Query<&mut CardPile>,
+    mut pile: ResMut<CardPile>,
     mut ruin: ResMut<RuinIndicator>,
     mut state: ResMut<State<GameState>>,
     assets: Res<AssetManager>,
 ) {
-    if let Ok(mut pile) = card_pile.single_mut() {
-        if active_card.single().is_ok() {
-            return; // already an active card
-        } else {
-            if !current_season.has_time_left() {
-                //trigger season end stuffy buffy flingy bingy
-                state.push(GameState::SeasonScoreState).unwrap();
-                return;
+    // we don't care how often, just that someone wants to spawn a new card...
+    if reader.iter().count() > 0 {
+        if !current_season.has_time_left() {
+            //trigger season end stuffy buffy flingy bingy
+            state.push(GameState::SeasonScoreState).unwrap();
+            return;
+        }
+        if let Some(mut card) = pile.cards.pop() {
+            // time is added before cards are placed
+            current_season.pass_time(card.time());
+            // test whether you can play this card
+            if !card.is_placable(&grid, &ruin) {
+                println!("Card cannot be placed, fallback to default splinter card");
+                card = Card::default();
+                ruin.reset(); // if card is replaced, it does not need to be placed on ruins
             }
-            if let Some(mut card) = pile.cards.pop() {
-                // time is added before cards are placed
-                current_season.pass_time(card.time());
-                // test whether you can play this card
-                if !card.is_placable(&grid, &ruin) {
-                    println!("Card cannot be placed, fallback to default splinter card");
-                    card = Card::default();
-                    ruin.reset(); // if card is replaced, it does not need to be placed on ruins
-                }
 
-                card.spawn(&mut com, &assets, &ruin);
-                ruin.reset();
-            }
+            card.spawn(&mut com, &assets, &ruin);
+            ruin.reset();
         }
     }
 }
 
 pub fn initialize_cards(
-    // runs always
     mut com: Commands,
-    query: Query<(&CardPile, Entity)>,
     assets: Res<AssetManager>,
     mut storage: ResMut<Assets<CardPile>>,
+    mut next: EventWriter<NewCard>,
 ) {
-    for (_, ent) in query.iter() {
-        com.entity(ent).despawn_recursive();
-    }
-    if let Some(cards) = storage.get_mut(&assets.cards) {
-        let mut pile = cards.clone();
-        pile.cards.shuffle(&mut thread_rng());
-        //FIXME
-        // TODO: make me visible... (otherwise I rly could have used a resource lol)
-        com.spawn().insert(pile);
-    }
+    let mut cards = storage.get_mut(&assets.cards).unwrap().clone();
+    cards.shuffle();
+
+    // will override old CardPile if existent
+    com.insert_resource(cards);
+    next.send(NewCard);
 }

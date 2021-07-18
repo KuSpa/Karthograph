@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use crate::asset_management::AssetManager;
 use crate::card::{Card, RuinIndicator};
+use crate::card_pile::NewCard;
 use crate::grid::{Coordinate, Cultivation, Grid};
 use crate::util::min_f;
 use crate::SPRITE_SIZE;
@@ -188,9 +189,9 @@ pub fn move_shape(
     mut query: Query<(&Shape, &mut Transform)>,
     grid: Res<Grid>,
 ) {
-    // BREAKS IF TWO SHAPES ARE ACTIVE
-    if let Ok((shape, mut transform)) = query.single_mut() {
-        for event in cursor.iter() {
+    for event in cursor.iter() {
+        // BREAKS IF TWO SHAPES ARE ACTIVE
+        if let Ok((shape, mut transform)) = query.single_mut() {
             //calculate the closest cell
             let mut position = event.position;
             let grid_pos = Grid::screen_to_grid(position);
@@ -217,7 +218,6 @@ pub fn rotate_shape(
             .collect();
 
         for event in cursor.iter() {
-            //calculate the closest cell
             if event.y < 0. {
                 // CW
                 shape.rotate_clockwise(&mut transforms);
@@ -233,15 +233,13 @@ pub fn mirror_shape(
     mut parents: Query<(Entity, &mut Shape)>,
     mut query: Query<(&Parent, &mut Transform)>,
 ) {
-    if let Ok((parent, mut shape)) = parents.single_mut() {
-        let mut transforms: Vec<Mut<Transform>> = query
-            .iter_mut()
-            .filter_map(|(Parent(ent), tr)| if *ent == parent { Some(tr) } else { None })
-            .collect();
-
-        for event in clicks.iter() {
-            //calculate the closest cell
-            if event.button == MouseButton::Middle && event.state.is_pressed() {
+    for event in clicks.iter() {
+        if event.button == MouseButton::Middle && event.state.is_pressed() {
+            if let Ok((parent, mut shape)) = parents.single_mut() {
+                let mut transforms: Vec<Mut<Transform>> = query
+                    .iter_mut()
+                    .filter_map(|(Parent(ent), tr)| if *ent == parent { Some(tr) } else { None })
+                    .collect();
                 shape.mirror(&mut transforms);
             }
         }
@@ -254,6 +252,7 @@ pub fn place_shape(
     mut grid: ResMut<Grid>,
     card: Query<(Entity, &Card)>,
     mut clicks: EventReader<MouseButtonInput>,
+    mut next_card: EventWriter<NewCard>,
     assets: Res<AssetManager>,
     mut handles: Query<&mut Handle<ColorMaterial>>,
 ) {
@@ -268,6 +267,7 @@ pub fn place_shape(
                     if let Ok((card_entity, _)) = card.single() {
                         com.entity(card_entity).despawn_recursive();
                     }
+                    next_card.send(NewCard);
                 }
             }
         }
