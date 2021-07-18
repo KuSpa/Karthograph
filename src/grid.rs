@@ -194,15 +194,15 @@ impl Grid {
 
     fn cultivate(&mut self, shape: &Shape, coord: &Coordinate) -> Vec<Entity> {
         let mut entities = Vec::default();
-        for position in shape.geometry.iter() {
+        for position in shape.geometry().iter() {
             let mut field = self.at_mut(&(*coord + *position)).unwrap();
-            field.cultivation = Some(shape.cultivation.into());
+            field.cultivation = Some(shape.cultivation().into());
             entities.push(field.entity);
         }
 
         //safe, we count to infinity or max grid fields
         let id = self.area_counter.next().unwrap();
-        self.propagate_id(&coord, id, &shape.cultivation);
+        self.propagate_id(&coord, id, &shape.cultivation());
 
         entities
     }
@@ -301,7 +301,7 @@ impl Grid {
         shape: &Shape,
         coord: &Coordinate,
     ) -> Result<Vec<Entity>, &'static str> {
-        if self.accepts_geometry_at(&shape.geometry, &coord, &shape.ruin) {
+        if self.accepts_geometry_at(&shape.geometry(), &coord, &shape.ruin()) {
             Ok(self.cultivate(&shape, &coord))
         } else {
             Err("Can't place the shape here")

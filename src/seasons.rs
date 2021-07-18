@@ -23,6 +23,10 @@ impl Season {
     pub fn has_time_left(&self) -> bool {
         self.passed_time < self.season_type.time()
     }
+
+    pub fn season_type(&self) -> &SeasonType {
+        &self.season_type
+    }
 }
 #[derive(Debug)]
 pub enum SeasonType {
@@ -64,7 +68,7 @@ pub fn score_season(
     objectives: Res<GameObjectives>,
     grid: Res<Grid>,
 ) {
-    let (first, second) = objectives.objectives_for_season(&season.season_type);
+    let (first, second) = objectives.objectives_for_season(&season);
     println!("{:?} scored {:?}", first.name(), first.score(&grid));
     println!("{:?} scored {:?}", second.name(), second.score(&grid));
     /* TODO: mountains, coins, UI */

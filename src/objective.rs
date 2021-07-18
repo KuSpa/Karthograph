@@ -1,6 +1,6 @@
 use crate::{
     grid::{Cultivation, Grid},
-    seasons::SeasonType,
+    seasons::{Season, SeasonType},
 };
 
 /* I really like this too, but its unintuitive when reading
@@ -19,8 +19,8 @@ pub struct GameObjectives {
     objectives: [Box<dyn Objective + Send + Sync>; 4],
 }
 impl GameObjectives {
-    pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
-        match &season {
+    pub fn objectives_for_season(&self, season: &Season) -> (&dyn Objective, &dyn Objective) {
+        match &season.season_type() {
             SeasonType::Spring => (&*self.objectives[0], &*self.objectives[1]),
             SeasonType::Summer => (&*self.objectives[1], &*self.objectives[2]),
             SeasonType::Autumn => (&*self.objectives[2], &*self.objectives[3]),
