@@ -77,7 +77,7 @@ impl From<Cultivation> for &'static str {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum Terrain {
+enum Terrain {
     Normal,
     Mountain,
     Ruin,
@@ -100,9 +100,15 @@ impl From<Terrain> for &'static str {
 
 #[derive(Debug, Clone, Copy)]
 pub struct CultivationInformation {
-    pub cultivation: Cultivation,
-    pub area_id: usize,
-    pub size: usize,
+    cultivation: Cultivation,
+    area_id: usize,
+    size: usize,
+}
+
+impl CultivationInformation {
+    pub fn cultivation(&self) -> &Cultivation {
+        &self.cultivation
+    }
 }
 
 impl From<Cultivation> for CultivationInformation {
@@ -118,11 +124,11 @@ impl From<Cultivation> for CultivationInformation {
 #[derive(Debug)]
 pub struct Field {
     pub cultivation: Option<CultivationInformation>,
-    pub terrain: Terrain,
-    pub entity: Entity, // TODO GETTER
-    pub position: Coordinate,
+    terrain: Terrain,
+    entity: Entity,
+    position: Coordinate,
 }
-pub struct FieldComponent;
+struct FieldComponent;
 
 impl Field {
     fn new(entity: Entity, position: Coordinate) -> Self {
@@ -133,11 +139,15 @@ impl Field {
             position,
         }
     }
+
+    pub fn position(&self) -> Coordinate {
+        self.position
+    }
 }
 
 #[derive(Debug)]
 pub struct Grid {
-    pub entity: Entity,
+    entity: Entity,
     area_counter: RangeFrom<usize>,
     inner: [Field; Grid::SIZE * Grid::SIZE],
 }
@@ -192,19 +202,37 @@ impl Grid {
         }
     }
 
-    fn cultivate(&mut self, shape: &Shape, coord: &Coordinate) -> Vec<Entity> {
-        let mut entities = Vec::default();
+    pub fn try_cultivate(
+        &mut self,
+        shape: &Shape,
+        coord: &Coordinate,
+        assets: &AssetManager,
+        mut handles: &mut Query<&mut Handle<ColorMaterial>>,
+    ) -> Result<(), &'static str> {
+        if self.accepts_geometry_at(&shape.geometry(), &coord, &shape.ruin()) {
+            self.cultivate(&shape, &coord, &assets, &mut handles);
+            Ok(())
+        } else {
+            Err("Can't place the shape here")
+        }
+    }
+
+    fn cultivate(
+        &mut self,
+        shape: &Shape,
+        coord: &Coordinate,
+        assets: &AssetManager,
+        handles: &mut Query<&mut Handle<ColorMaterial>>,
+    ) {
         for position in shape.geometry().iter() {
             let mut field = self.at_mut(&(*coord + *position)).unwrap();
             field.cultivation = Some(shape.cultivation().into());
-            entities.push(field.entity);
+            let mut handle = handles.get_mut(field.entity).unwrap();
+            *handle = assets.fetch(shape.cultivation().into()).unwrap();
         }
 
-        //safe, we count to infinity or max grid fields
         let id = self.area_counter.next().unwrap();
         self.propagate_id(&coord, id, &shape.cultivation());
-
-        entities
     }
 
     fn propagate_id(&mut self, coord: &Coordinate, id: usize, cultivation: &Cultivation) {
@@ -294,18 +322,6 @@ impl Grid {
         }
         // == !(ruin && !on_ruin) <= if it SHOULD be on a ruin, but is NOT, then return false
         !(**ruins) || on_ruin
-    }
-
-    pub fn try_cultivate(
-        &mut self,
-        shape: &Shape,
-        coord: &Coordinate,
-    ) -> Result<Vec<Entity>, &'static str> {
-        if self.accepts_geometry_at(&shape.geometry(), &coord, &shape.ruin()) {
-            Ok(self.cultivate(&shape, &coord))
-        } else {
-            Err("Can't place the shape here")
-        }
     }
 
     fn initialize(com: &mut Commands, ruins: &[Coordinate], mountains: &[Coordinate]) -> Self {
