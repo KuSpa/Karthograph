@@ -77,7 +77,7 @@ impl AssetID for Cultivation {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-enum Terrain {
+pub enum Terrain {
     Normal,
     Mountain,
     Ruin,
@@ -142,6 +142,10 @@ impl Field {
 
     pub fn position(&self) -> Coordinate {
         self.position
+    }
+
+    pub fn terrain(&self)->Terrain{
+        self.terrain
     }
 }
 
@@ -277,7 +281,7 @@ impl Grid {
     }
 
     // I would like to have an iterator to `&Field` here, but then I would have to `split` which is unpleasant, so this has to suffice :(
-    fn neighbor_indices(&self, coord: &Coordinate) -> Vec<Coordinate> {
+    pub fn neighbor_indices(&self, coord: &Coordinate) -> Vec<Coordinate> {
         let top = *coord + (0, 1).into();
         let bottom = *coord + (0, -1).into();
         let right = *coord + (1, 0).into();
