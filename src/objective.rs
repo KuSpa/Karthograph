@@ -1,14 +1,21 @@
+use std::ops::AddAssign;
+
 use crate::{
     asset_management::AssetID,
-    grid::{Cultivation, Grid},
+    grid::{Cultivation, Grid, Terrain},
     seasons::{Season, SeasonType},
 };
 
 /* I really like this too, but its unintuitive when reading
 struct Objective{scoring: fn(&Grid)->u32,}*/
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Score(usize);
+impl AddAssign<usize> for Score {
+    fn add_assign(&mut self, rhs: usize) {
+        self.0 += rhs
+    }
+}
 
 pub trait Objective: AssetID {
     fn name(&self) -> &'static str;
@@ -35,7 +42,7 @@ impl Default for GameObjectives {
         Self {
             objectives: [
                 Box::new(DuesterWald),
-                Box::new(DuesterWald),
+                Box::new(TalDerMagier),
                 Box::new(DuesterWald),
                 Box::new(DuesterWald),
             ],
@@ -76,4 +83,41 @@ impl Objective for DuesterWald {
     }
 }
 
-/* TODO */
+struct TalDerMagier;
+
+impl AssetID for TalDerMagier {
+    fn asset_id(&self) -> &'static str {
+        "tal_der_magier"
+    }
+}
+
+impl Objective for TalDerMagier {
+    fn name(&self) -> &'static str {
+        "Tal der Magier"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+
+        for field in grid
+            .all()
+            .filter(|field| field.terrain() == Terrain::Mountain)
+        {
+            for neighbor in grid.neighbor_indices(&field.position()) {
+                match grid
+                    .at(&neighbor)
+                    .unwrap()
+                    .cultivation
+                    .as_ref()
+                    .map(|info| info.cultivation())
+                {
+                    Some(Cultivation::Water) => score +=1,
+                    Some(Cultivation::Farm) => score += 1,
+                    _ =>{}
+                }
+            }
+        }
+
+        score
+    }
+}
