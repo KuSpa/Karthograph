@@ -326,8 +326,8 @@ impl Grid {
 
     fn initialize(com: &mut Commands, ruins: &[Coordinate], mountains: &[Coordinate]) -> Self {
         let mut temp_vec: Vec<Field> = Vec::default();
-        for x in 0..Self::SIZE {
-            for y in 0..Self::SIZE {
+        for y in 0..Self::SIZE {
+            for x in 0..Self::SIZE {
                 let entity = com.spawn().id();
                 temp_vec.push(Field::new(entity, (x, y).into()));
             }
@@ -394,25 +394,23 @@ impl Grid {
 pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
     let grid = Grid::new(&mut com);
 
-    for x in 0..(GRID_SIZE as usize) {
-        for y in 0..(GRID_SIZE as usize) {
-            let field = grid.at(&(x, y).into()).unwrap();
+    for field in grid.all(){
             let mat = assets.fetch(field.terrain.asset_id()).unwrap();
-            let entity = field.entity;
+            let pos = field.position();
             //THE FIELD OR THE GRID SHOULD DO THIS ITSELF
-            com.entity(entity)
+            com.entity(field.entity)
                 .insert(FieldComponent)
                 .insert_bundle(SpriteBundle {
                     sprite: Sprite::new(Vec2::new(SPRITE_SIZE, SPRITE_SIZE)),
                     material: mat,
                     transform: Transform::from_xyz(
-                        x as f32 * SPRITE_SIZE + GRID_OFFSET,
-                        y as f32 * SPRITE_SIZE + GRID_OFFSET,
+                        pos.x as f32 * SPRITE_SIZE + GRID_OFFSET,
+                        pos.y as f32 * SPRITE_SIZE + GRID_OFFSET,
                         -0.1,
                     ),
                     ..Default::default()
                 });
         }
-    }
+    
     com.insert_resource(grid);
 }
