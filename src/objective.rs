@@ -41,7 +41,7 @@ impl Default for GameObjectives {
     fn default() -> Self {
         Self {
             objectives: [
-                Box::new(DuesterWald),
+                Box::new(LongRoad),
                 Box::new(TalDerMagier),
                 Box::new(DuesterWald),
                 Box::new(DuesterWald),
@@ -111,10 +111,42 @@ impl Objective for TalDerMagier {
                     .as_ref()
                     .map(|info| info.cultivation())
                 {
-                    Some(Cultivation::Water) => score +=1,
+                    Some(Cultivation::Water) => score += 1,
                     Some(Cultivation::Farm) => score += 1,
-                    _ =>{}
+                    _ => {}
                 }
+            }
+        }
+
+        score
+    }
+}
+
+struct LongRoad;
+
+impl AssetID for LongRoad {
+    fn asset_id(&self) -> &'static str {
+        "long_road"
+    }
+}
+
+impl Objective for LongRoad {
+    fn name(&self) -> &'static str {
+        "Die Lange Straße"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for diagonal in grid.diagonals().take(Grid::SIZE) {
+            let mut is_free = false;
+            for field in diagonal {
+                if field.is_free() {
+                    is_free = true;
+                }
+            }
+
+            if !is_free {
+                score += 3;
             }
         }
 

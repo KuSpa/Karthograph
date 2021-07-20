@@ -6,6 +6,7 @@ use bevy::math::i32;
 use bevy::prelude::*;
 use derive_deref::*;
 use serde::Deserialize;
+use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::{Add, RangeFrom};
 use std::usize;
@@ -144,8 +145,12 @@ impl Field {
         self.position
     }
 
-    pub fn terrain(&self)->Terrain{
+    pub fn terrain(&self) -> Terrain {
         self.terrain
+    }
+
+    pub fn is_free(&self) -> bool {
+        self.terrain != Terrain::Mountain && self.cultivation.is_none()
     }
 }
 
@@ -157,7 +162,7 @@ pub struct Grid {
 }
 
 impl Grid {
-    const SIZE: usize = GRID_SIZE as usize;
+    pub const SIZE: usize = GRID_SIZE as usize;
 
     pub fn screen_to_grid(mut position: Vec2) -> Coordinate {
         position.x -= GRID_OFFSET;
@@ -199,8 +204,7 @@ impl Grid {
 
     pub fn is_free(&self, coord: &Coordinate) -> bool {
         if let Ok(index) = self.index(coord) {
-            let field = &self.inner[index];
-            field.terrain != Terrain::Mountain && field.cultivation.is_none()
+            self.inner[index].is_free()
         } else {
             false
         }
@@ -392,6 +396,30 @@ impl Grid {
     // use result for safety?
     pub fn column(&self, nth: usize) -> impl Iterator<Item = &Field> {
         self.inner.iter().skip(nth).step_by(Self::SIZE)
+    }
+
+    /// from left border to bottom
+    pub fn nth_diagonal(&self, nth: usize) -> impl Iterator<Item = &Field> {
+        let delta_x = min(nth, Self::SIZE - 1);
+        let delta_y = if nth > (Self::SIZE - 1) {
+            nth - (Self::SIZE - 1)
+        } else {
+            0
+        }; // to avoid underflow of usize
+
+        self.inner
+            .iter()
+            .skip(delta_x + delta_y * Self::SIZE)
+            .step_by(Self::SIZE - 1)
+            // If nth > Self::Size the iterator ends in the uppermost row, yielding no more Items
+            .take(nth + 1)
+    }
+
+    /// from left border to bottom
+    pub fn diagonals(&self) -> impl Iterator<Item = impl Iterator<Item = &Field>> {
+        (0..(Self::SIZE * Self::SIZE - 1))
+            .into_iter()
+            .map(move |nth| self.nth_diagonal(nth))
     }
 }
 
