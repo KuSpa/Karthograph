@@ -15,7 +15,7 @@ const SPRITE_SIZE: f32 = 75.;
 const GRID_SIZE: usize = 11;
 //x=y offset
 const GRID_OFFSET: f32 = SPRITE_SIZE;
-#[derive(Debug, Default, Clone, Copy, Deserialize, Deref, DerefMut)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone, Copy, Deserialize, Deref, DerefMut)]
 pub struct Coordinate(IVec2);
 
 impl Coordinate {
@@ -109,6 +109,14 @@ pub struct CultivationInformation {
 impl CultivationInformation {
     pub fn cultivation(&self) -> &Cultivation {
         &self.cultivation
+    }
+
+    pub fn area_id(&self) -> usize {
+        self.area_id
+    }
+
+    pub fn size(&self) -> usize {
+        self.size
     }
 }
 
@@ -272,6 +280,7 @@ impl Grid {
             }
         }
 
+        fields.dedup();
         let size = fields.len();
         for field_pos in fields {
             self.at_mut(&field_pos)
