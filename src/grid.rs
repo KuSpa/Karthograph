@@ -178,7 +178,7 @@ impl Grid {
     }
 
     fn index(&self, coord: &Coordinate) -> Result<usize, ()> {
-        if !self.is_valid_coord(&coord) {
+        if !self.is_valid_coord(coord) {
             Err(())
         } else {
             Ok((coord.x as usize) + (coord.y as usize) * Self::SIZE)
@@ -209,8 +209,8 @@ impl Grid {
         assets: &AssetManager,
         mut handles: &mut Query<&mut Handle<ColorMaterial>>,
     ) -> Result<(), &'static str> {
-        if self.accepts_geometry_at(&shape.geometry(), &coord, &shape.ruin()) {
-            self.cultivate(&shape, &coord, &assets, &mut handles);
+        if self.accepts_geometry_at(shape.geometry(), coord, &shape.ruin()) {
+            self.cultivate(shape, coord, assets, &mut handles);
             Ok(())
         } else {
             Err("Can't place the shape here")
@@ -232,7 +232,7 @@ impl Grid {
         }
 
         let id = self.area_counter.next().unwrap();
-        self.propagate_id(&coord, id, &shape.cultivation());
+        self.propagate_id(coord, id, &shape.cultivation());
     }
 
     fn propagate_id(&mut self, coord: &Coordinate, id: usize, cultivation: &Cultivation) {
@@ -284,7 +284,7 @@ impl Grid {
         let left = *coord + (-1, 0).into();
         vec![top, bottom, right, left]
             .into_iter()
-            .filter(|c| self.is_valid_coord(&c))
+            .filter(|c| self.is_valid_coord(c))
             .collect()
     }
 
@@ -295,7 +295,7 @@ impl Grid {
         for mut geom in [geom.clone(), mirrored] {
             for _ in 0..4 {
                 for field in self.all() {
-                    if self.accepts_geometry_at(&geom, &field.position, &ruins) {
+                    if self.accepts_geometry_at(&geom, &field.position, ruins) {
                         return true;
                     }
                 }
@@ -340,21 +340,21 @@ impl Grid {
         };
 
         for pos in mountains.iter() {
-            grid.inner[grid.index(&pos).unwrap()].terrain = Terrain::Mountain;
+            grid.inner[grid.index(pos).unwrap()].terrain = Terrain::Mountain;
         }
 
         for pos in ruins.iter() {
-            grid.inner[grid.index(&pos).unwrap()].terrain = Terrain::Ruin;
+            grid.inner[grid.index(pos).unwrap()].terrain = Terrain::Ruin;
         }
         grid
     }
 
     pub fn at_mut(&mut self, coord: &Coordinate) -> Result<&mut Field, ()> {
-        self.index(&coord).map(move |i| &mut self.inner[i])
+        self.index(coord).map(move |i| &mut self.inner[i])
     }
 
     pub fn at(&self, coord: &Coordinate) -> Result<&Field, ()> {
-        self.index(&coord).map(|i| &self.inner[i])
+        self.index(coord).map(|i| &self.inner[i])
     }
 
     pub fn new(com: &mut Commands) -> Self {

@@ -262,7 +262,7 @@ pub fn place_shape(
             if let Ok((t_entity, shape, transform)) = shapes.single() {
                 let position = Vec2::new(transform.translation.x, transform.translation.y);
                 let grid_position = Grid::screen_to_grid(position);
-                if let Ok(()) = grid.try_cultivate(&shape, &grid_position, &assets, &mut handles) {
+                if let Ok(()) = grid.try_cultivate(shape, &grid_position, &assets, &mut handles) {
                     // the magic happens in try_cultivate, if this is successful, all thats left to do is to despawn the shape and the card
                     com.entity(t_entity).despawn_recursive();
                     if let Ok((card_entity, _)) = card.single() {

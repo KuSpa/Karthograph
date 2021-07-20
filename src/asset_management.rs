@@ -36,7 +36,7 @@ impl AssetManager {
     ) {
         for (name, path) in ASSETS {
             let asset = materials.add(asset_server.load(path).clone().into());
-            self.insert_asset(&name, asset);
+            self.insert_asset(name, asset);
         }
         self.cards = asset_server.load("content.cardpile");
         self.font = asset_server.load("font.ttf");

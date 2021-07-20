@@ -88,10 +88,10 @@ impl Card {
             .id();
 
         match &self {
-            Card::Shape(def) => def.spawn(com, entity, &assets, ruin),
-            Card::Cultivation(def) => def.spawn(com, entity, &assets, ruin),
-            Card::Splinter(def) => def.spawn(com, entity, &assets, ruin),
-            Card::Ruin(def) => def.spawn(com, entity, &assets),
+            Card::Shape(def) => def.spawn(com, entity, assets, ruin),
+            Card::Cultivation(def) => def.spawn(com, entity, assets, ruin),
+            Card::Splinter(def) => def.spawn(com, entity, assets, ruin),
+            Card::Ruin(def) => def.spawn(com, entity, assets),
         }
         com.entity(entity).insert(self);
     }
@@ -99,9 +99,9 @@ impl Card {
     pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
         match &self {
             Self::Ruin(_) => true,
-            Self::Splinter(def) => def.is_placable(&grid, &ruin),
-            Self::Shape(def) => def.is_placable(&grid, ruin),
-            Self::Cultivation(def) => def.is_placable(&grid, &ruin),
+            Self::Splinter(def) => def.is_placable(grid, ruin),
+            Self::Shape(def) => def.is_placable(grid, ruin),
+            Self::Cultivation(def) => def.is_placable(grid, ruin),
         }
     }
 
@@ -240,7 +240,7 @@ impl ShapeDefinition {
     }
 
     pub fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        grid.accepts_geometry(&self.left, &ruin) || grid.accepts_geometry(&self.right, &ruin)
+        grid.accepts_geometry(&self.left, ruin) || grid.accepts_geometry(&self.right, ruin)
     }
 }
 #[derive(Deserialize, Clone)]
@@ -316,7 +316,7 @@ impl CultivationDefinition {
     }
 
     fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        grid.accepts_geometry(&self.geometry, &ruin)
+        grid.accepts_geometry(&self.geometry, ruin)
     }
 }
 #[derive(Deserialize, Clone)]
@@ -375,7 +375,7 @@ impl SplinterDefinition {
     }
 
     fn is_placable(&self, grid: &Grid, ruin: &RuinIndicator) -> bool {
-        grid.accepts_geometry(&Geometry::default(), &ruin)
+        grid.accepts_geometry(&Geometry::default(), ruin)
     }
 }
 
