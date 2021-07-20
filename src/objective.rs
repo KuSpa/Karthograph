@@ -1,5 +1,7 @@
 use std::ops::AddAssign;
 
+use bevy::utils::HashSet;
+
 use crate::{
     asset_management::AssetID,
     grid::{Cultivation, Grid, Terrain},
@@ -41,7 +43,7 @@ impl Default for GameObjectives {
     fn default() -> Self {
         Self {
             objectives: [
-                Box::new(LongRoad),
+                Box::new(BastionInTheWilderness),
                 Box::new(TalDerMagier),
                 Box::new(DuesterWald),
                 Box::new(DuesterWald),
@@ -150,6 +152,38 @@ impl Objective for LongRoad {
             }
         }
 
+        score
+    }
+}
+
+struct BastionInTheWilderness;
+
+impl AssetID for BastionInTheWilderness {
+    fn asset_id(&self) -> &'static str {
+        "bastion_in_the_wilderness"
+    }
+}
+
+impl Objective for BastionInTheWilderness {
+    fn name(&self) -> &'static str {
+        "Bastion In The Wilderness"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        let mut known_villages = HashSet::default();
+        for field in grid.all() {
+            if let Some(ref cult) = field.cultivation {
+                if *cult.cultivation() == Cultivation::Village
+                    && cult.size() >= 6
+                    && !known_villages.contains(&cult.area_id())
+                {
+                    println!("FOUND VILLAGE at {:?}", field);
+                    known_villages.insert(cult.area_id());
+                    score += 8;
+                }
+            }
+        }
         score
     }
 }
