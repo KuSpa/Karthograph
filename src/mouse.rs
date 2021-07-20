@@ -10,8 +10,7 @@ pub struct MousePosition {
 }
 
 pub fn mouse_position(mut mouse: ResMut<MousePosition>, mut cursor: EventReader<CursorMoved>) {
-    cursor
-        .iter()
-        .last()
-        .map(|event| mouse.inner = event.position);
+    if let Some(event) = cursor.iter().last() {
+        mouse.inner = event.position
+    };
 }

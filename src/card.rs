@@ -379,6 +379,7 @@ impl SplinterDefinition {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn click_card(
     mut com: Commands,
     query: Query<(&CardClickEvent, &GlobalTransform, &Sprite, Entity)>,

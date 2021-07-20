@@ -57,6 +57,7 @@ impl Default for CardPile {
 
 pub struct NewCard;
 
+#[allow(clippy::too_many_arguments)]
 pub fn next_card(
     mut com: Commands,
     mut reader: EventReader<NewCard>,

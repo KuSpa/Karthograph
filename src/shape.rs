@@ -246,6 +246,7 @@ pub fn mirror_shape(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn place_shape(
     mut com: Commands,
     shapes: Query<(Entity, &Shape, &Transform)>,

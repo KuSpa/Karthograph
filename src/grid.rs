@@ -394,23 +394,23 @@ impl Grid {
 pub fn init_grid(mut com: Commands, assets: Res<AssetManager>) {
     let grid = Grid::new(&mut com);
 
-    for field in grid.all(){
-            let mat = assets.fetch(field.terrain.asset_id()).unwrap();
-            let pos = field.position();
-            //THE FIELD OR THE GRID SHOULD DO THIS ITSELF
-            com.entity(field.entity)
-                .insert(FieldComponent)
-                .insert_bundle(SpriteBundle {
-                    sprite: Sprite::new(Vec2::new(SPRITE_SIZE, SPRITE_SIZE)),
-                    material: mat,
-                    transform: Transform::from_xyz(
-                        pos.x as f32 * SPRITE_SIZE + GRID_OFFSET,
-                        pos.y as f32 * SPRITE_SIZE + GRID_OFFSET,
-                        -0.1,
-                    ),
-                    ..Default::default()
-                });
-        }
-    
+    for field in grid.all() {
+        let mat = assets.fetch(field.terrain.asset_id()).unwrap();
+        let pos = field.position();
+        //THE FIELD OR THE GRID SHOULD DO THIS ITSELF
+        com.entity(field.entity)
+            .insert(FieldComponent)
+            .insert_bundle(SpriteBundle {
+                sprite: Sprite::new(Vec2::new(SPRITE_SIZE, SPRITE_SIZE)),
+                material: mat,
+                transform: Transform::from_xyz(
+                    pos.x as f32 * SPRITE_SIZE + GRID_OFFSET,
+                    pos.y as f32 * SPRITE_SIZE + GRID_OFFSET,
+                    -0.1,
+                ),
+                ..Default::default()
+            });
+    }
+
     com.insert_resource(grid);
 }
