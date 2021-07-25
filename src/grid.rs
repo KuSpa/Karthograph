@@ -4,9 +4,10 @@ use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
 use bevy::math::i32;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use derive_deref::*;
 use serde::Deserialize;
-use std::cmp::min;
+use std::cmp::{Ordering, min};
 use std::collections::VecDeque;
 use std::ops::{Add, RangeFrom};
 use std::usize;
@@ -55,7 +56,7 @@ impl Add<Coordinate> for Coordinate {
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Cultivation {
     //Add a None type??
     Village,
@@ -102,7 +103,7 @@ impl AssetID for Terrain {
 #[derive(Debug, Clone, Copy)]
 pub struct CultivationInformation {
     cultivation: Cultivation,
-    area_id: usize,
+    area_id: AreaID,
     size: usize,
 }
 
@@ -111,7 +112,7 @@ impl CultivationInformation {
         &self.cultivation
     }
 
-    pub fn area_id(&self) -> usize {
+    pub fn area_id(&self) -> AreaID {
         self.area_id
     }
 
@@ -124,7 +125,7 @@ impl From<Cultivation> for CultivationInformation {
     fn from(c: Cultivation) -> Self {
         Self {
             cultivation: c,
-            area_id: 0,
+            area_id: AreaID(0),
             size: 0,
         }
     }
@@ -162,9 +163,20 @@ impl Field {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AreaInfo{
+    pub size: usize,
+    pub kind: Cultivation,
+}
+
+#[derive(Deref, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord ,Hash)]
+pub struct AreaID(usize);
+
+
 #[derive(Debug)]
 pub struct Grid {
     entity: Entity,
+    area_infos: HashMap<AreaID, AreaInfo>,
     area_counter: RangeFrom<usize>,
     inner: [Field; Grid::SIZE * Grid::SIZE],
 }
@@ -233,6 +245,10 @@ impl Grid {
         }
     }
 
+    fn next_area_id(&mut self)-> AreaID{
+        AreaID(self.area_counter.next().unwrap())
+    }
+
     fn cultivate(
         &mut self,
         shape: &Shape,
@@ -247,18 +263,16 @@ impl Grid {
             *handle = assets.fetch(shape.cultivation().asset_id()).unwrap();
         }
 
-        let id = self.area_counter.next().unwrap();
+        let id = self.next_area_id();
         self.propagate_id(coord, id, &shape.cultivation());
     }
 
-    fn propagate_id(&mut self, coord: &Coordinate, id: usize, cultivation: &Cultivation) {
+    fn propagate_id(&mut self, coord: &Coordinate, id: AreaID, cultivation: &Cultivation) {
         let mut queue = VecDeque::new();
         let mut fields = Vec::new();
         queue.push_front(*coord);
         while let Some(pos) = queue.pop_back() {
             fields.push(pos);
-
-            //set current to
 
             // non valid `pos` are not added to the queue
             self.at_mut(&pos)
@@ -275,6 +289,8 @@ impl Grid {
                 if let Some(area_info) = field.cultivation {
                     if area_info.area_id < id && area_info.cultivation == *cultivation {
                         queue.push_front(neighbor_pos);
+                        // the old id has been flooded, time to delete if from known id's (if not happened in earlier iteration)
+                        self.area_infos.remove_entry(&area_info.area_id);
                     }
                 }
             }
@@ -291,6 +307,8 @@ impl Grid {
                 .unwrap()
                 .size = size;
         }
+
+        self.area_infos.insert(id, AreaInfo{kind: *cultivation, size:size});
     }
 
     // I would like to have an iterator to `&Field` here, but then I would have to `split` which is unpleasant, so this has to suffice :(
@@ -303,6 +321,20 @@ impl Grid {
             .into_iter()
             .filter(|c| self.is_valid_coord(c))
             .collect()
+    }
+
+    /// returns ids of components sorted by size (biggest first)
+    pub fn area_ids(&self, cultivation: Cultivation)-> Vec<(AreaID, AreaInfo)>{
+
+        let mut result:Vec<(AreaID, AreaInfo)> = Vec::default();
+        for (&k, &v) in self.area_infos.iter(){
+            if v.kind == cultivation {
+                // (k,v) can not be created by copying from (&k, &v), thus the destructuring
+                result.push((k,v));
+            }
+        }
+        result.sort_by(|&lhs, &rhs| lhs.1.cmp(&rhs.1).reverse());
+        result
     }
 
     pub fn accepts_geometry(&self, geom: &Geometry, ruins: &RuinIndicator) -> bool {
@@ -352,6 +384,7 @@ impl Grid {
         let entity = com.spawn().id();
         let mut grid = Grid {
             entity,
+            area_infos: Default::default(),
             area_counter: 1..,
             inner: to_array::<Field, { Self::SIZE * Self::SIZE }>(temp_vec),
         };

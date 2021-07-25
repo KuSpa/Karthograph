@@ -44,9 +44,9 @@ impl Default for GameObjectives {
         Self {
             objectives: [
                 Box::new(BastionInTheWilderness),
-                Box::new(TalDerMagier),
-                Box::new(DuesterWald),
-                Box::new(DuesterWald),
+                Box::new(Metropole),
+                Box::new(BastionInTheWilderness),
+                Box::new(Metropole),
             ],
         }
     }
@@ -170,20 +170,28 @@ impl Objective for BastionInTheWilderness {
     }
 
     fn score(&self, grid: &Grid) -> Score {
-        let mut score = Score::default();
-        let mut known_villages = HashSet::default();
-        for field in grid.all() {
-            if let Some(ref cult) = field.cultivation {
-                if *cult.cultivation() == Cultivation::Village
-                    && cult.size() >= 6
-                    && !known_villages.contains(&cult.area_id())
-                {
-                    println!("FOUND VILLAGE at {:?}", field);
-                    known_villages.insert(cult.area_id());
-                    score += 8;
-                }
-            }
-        }
-        score
+        Score(grid.area_ids(Cultivation::Village).iter().filter(|(_, info)| info.size >= 6).count() * 8)
+    }
+}
+
+struct Metropole;
+
+impl AssetID for Metropole{
+    fn asset_id(&self) -> &'static str {
+        "metropole"
+    }
+}
+
+impl Objective for Metropole{
+    fn name(&self) -> &'static str {
+        "Metropole"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+
+        println!("{:?}",grid.area_ids(Cultivation::Village));
+        // get all villages
+        // find largest one not adjacent to a mountain
+        Score::default()
     }
 }
