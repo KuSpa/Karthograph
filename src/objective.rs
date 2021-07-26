@@ -2,7 +2,11 @@ use std::ops::AddAssign;
 
 use bevy::utils::HashSet;
 
-use crate::{asset_management::AssetID, grid::{Cultivation, Grid, Terrain}, seasons::{Season, SeasonType}};
+use crate::{
+    asset_management::AssetID,
+    grid::{Cultivation, Grid, Terrain},
+    seasons::{Season, SeasonType},
+};
 
 /* I really like this too, but its unintuitive when reading
 struct Objective{scoring: fn(&Grid)->u32,}*/
@@ -100,11 +104,7 @@ impl Objective for TalDerMagier {
             .filter(|field| field.terrain() == Terrain::Mountain)
         {
             for neighbor in grid.neighbors(&field.position()) {
-                match neighbor
-                    .cultivation
-                    .as_ref()
-                    .map(|info| info.cultivation())
-                {
+                match neighbor.cultivation.as_ref().map(|info| info.cultivation()) {
                     Some(Cultivation::Water) => score += 1,
                     Some(Cultivation::Farm) => score += 1,
                     _ => {}
@@ -185,15 +185,15 @@ impl Objective for Metropole {
     }
 
     fn score(&self, grid: &Grid) -> Score {
-        'outer: for (&id,info) in grid.area_ids(Cultivation::Village){
-            let neighbors:Vec<_> = grid.area_neighbors(&id).collect();
+        'outer: for (&id, info) in grid.area_ids(Cultivation::Village) {
+            let neighbors: Vec<_> = grid.area_neighbors(&id).collect();
             for mountain in grid.mountains() {
-                if neighbors.contains(&mountain){
+                if neighbors.contains(&mountain) {
                     continue 'outer;
                 }
             }
 
-            return Score(info.size())
+            return Score(info.size());
         }
         Score::default()
     }
