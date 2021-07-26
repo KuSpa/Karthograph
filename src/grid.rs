@@ -3,8 +3,8 @@ use crate::card::RuinIndicator;
 use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
 use bevy::math::i32;
+use bevy::prelude::*;
 use bevy::utils::{HashMap, HashSet};
-use bevy::{log, prelude::*};
 use derive_deref::*;
 use itertools::Itertools;
 use serde::Deserialize;
@@ -26,11 +26,11 @@ impl Coordinate {
     }
 }
 
-impl Ord for Coordinate {
+/*impl Ord for Coordinate {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(&other).unwrap_or(Ordering::Equal)
     }
-}
+}*/
 
 impl From<(usize, usize)> for Coordinate {
     fn from((x, y): (usize, usize)) -> Self {
@@ -164,7 +164,7 @@ impl Field {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AreaInfo {
     pub kind: Cultivation,
     pub field_coords: Vec<Coordinate>,
@@ -173,6 +173,18 @@ pub struct AreaInfo {
 impl AreaInfo {
     pub fn size(&self) -> usize {
         self.field_coords.len()
+    }
+}
+
+impl PartialOrd for AreaInfo {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.size().partial_cmp(&other.size())
+    }
+}
+
+impl Ord for AreaInfo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.size().cmp(&other.size()).reverse()
     }
 }
 
@@ -350,7 +362,7 @@ impl Grid {
 
     pub fn area_neighbors(&self, id: &AreaID) -> impl Iterator<Item = &Field> {
         self.area_infos
-            .get(&id)
+            .get(id)
             .unwrap()
             .field_coords
             .iter()

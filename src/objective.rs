@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use bevy::utils::HashSet;
+use itertools::Itertools;
 
 use crate::{
     asset_management::AssetID,
@@ -186,7 +186,7 @@ impl Objective for Metropole {
 
     fn score(&self, grid: &Grid) -> Score {
         'outer: for (&id, info) in grid.area_ids(Cultivation::Village) {
-            let neighbors: Vec<_> = grid.area_neighbors(&id).collect();
+            let mut neighbors = grid.area_neighbors(&id);
             for mountain in grid.mountains() {
                 if neighbors.contains(&mountain) {
                     continue 'outer;
