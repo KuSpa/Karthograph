@@ -44,7 +44,7 @@ impl Default for GameObjectives {
         Self {
             objectives: [
                 Box::new(BastionInTheWilderness),
-                Box::new(Metropole),
+                Box::new(GoldenCorn),
                 Box::new(BastionInTheWilderness),
                 Box::new(Metropole),
             ],
@@ -196,5 +196,38 @@ impl Objective for Metropole {
             return Score(info.size());
         }
         Score::default()
+    }
+}
+
+struct GoldenCorn;
+
+impl AssetID for GoldenCorn {
+    fn asset_id(&self) -> &'static str {
+        "corn"
+    }
+}
+
+impl Objective for GoldenCorn {
+    fn name(&self) -> &'static str {
+        "Goldener Kornspeicher"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for ruin in grid.ruins() {
+            if ruin.cultivation.as_ref().map(|info| info.cultivation()) == Some(&Cultivation::Farm)
+            {
+                score += 3;
+            }
+
+            for neighbor in grid.neighbors(&ruin.position()) {
+                if neighbor.cultivation.as_ref().map(|info| info.cultivation())
+                    == Some(&Cultivation::Water)
+                {
+                    score += 1;
+                }
+            }
+        }
+        score
     }
 }

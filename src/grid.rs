@@ -342,6 +342,10 @@ impl Grid {
         self.all().filter(|&f| f.terrain() == Terrain::Mountain)
     }
 
+    pub fn ruins(&self) -> impl Iterator<Item = &Field> {
+        self.all().filter(|&field| field.terrain() == Terrain::Ruin)
+    }
+
     pub fn neighbors(&self, coord: &Coordinate) -> impl Iterator<Item = &Field> {
         let top = *coord + (0, 1).into();
         let bottom = *coord + (0, -1).into();
