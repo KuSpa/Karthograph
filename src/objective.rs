@@ -2,11 +2,7 @@ use std::ops::AddAssign;
 
 use bevy::utils::HashSet;
 
-use crate::{
-    asset_management::AssetID,
-    grid::{Cultivation, Grid, Terrain},
-    seasons::{Season, SeasonType},
-};
+use crate::{asset_management::AssetID, grid::{Cultivation, Grid, Terrain}, seasons::{Season, SeasonType}};
 
 /* I really like this too, but its unintuitive when reading
 struct Objective{scoring: fn(&Grid)->u32,}*/
@@ -70,11 +66,9 @@ impl Objective for DuesterWald {
             if let Some(Cultivation::Forest) =
                 field.cultivation.as_ref().map(|info| info.cultivation())
             {
-                let surrounding =
-                    vec![(1, 0).into(), (0, -1).into(), (-1, 0).into(), (0, 1).into()];
                 let mut free = false;
-                for offset in surrounding {
-                    free = free || grid.is_free(&(field.position() + offset))
+                for neighbor in grid.neighbors(&field.position()) {
+                    free = free || neighbor.is_free()
                 }
                 if !free {
                     count += 1;
@@ -105,10 +99,8 @@ impl Objective for TalDerMagier {
             .all()
             .filter(|field| field.terrain() == Terrain::Mountain)
         {
-            for neighbor in grid.neighbor_indices(&field.position()) {
-                match grid
-                    .at(&neighbor)
-                    .unwrap()
+            for neighbor in grid.neighbors(&field.position()) {
+                match neighbor
                     .cultivation
                     .as_ref()
                     .map(|info| info.cultivation())
@@ -170,28 +162,39 @@ impl Objective for BastionInTheWilderness {
     }
 
     fn score(&self, grid: &Grid) -> Score {
-        Score(grid.area_ids(Cultivation::Village).iter().filter(|(_, info)| info.size >= 6).count() * 8)
+        Score(
+            grid.area_ids(Cultivation::Village)
+                .filter(|(_, info)| info.size() >= 6)
+                .count()
+                * 8,
+        )
     }
 }
 
 struct Metropole;
 
-impl AssetID for Metropole{
+impl AssetID for Metropole {
     fn asset_id(&self) -> &'static str {
         "metropole"
     }
 }
 
-impl Objective for Metropole{
+impl Objective for Metropole {
     fn name(&self) -> &'static str {
         "Metropole"
     }
 
     fn score(&self, grid: &Grid) -> Score {
+        'outer: for (&id,info) in grid.area_ids(Cultivation::Village){
+            let neighbors:Vec<_> = grid.area_neighbors(&id).collect();
+            for mountain in grid.mountains() {
+                if neighbors.contains(&mountain){
+                    continue 'outer;
+                }
+            }
 
-        println!("{:?}",grid.area_ids(Cultivation::Village));
-        // get all villages
-        // find largest one not adjacent to a mountain
+            return Score(info.size())
+        }
         Score::default()
     }
 }

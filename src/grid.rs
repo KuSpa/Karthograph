@@ -3,11 +3,12 @@ use crate::card::RuinIndicator;
 use crate::shape::{Geometry, Shape};
 use crate::util::to_array;
 use bevy::math::i32;
-use bevy::prelude::*;
-use bevy::utils::HashMap;
+use bevy::utils::{HashMap, HashSet};
+use bevy::{log, prelude::*};
 use derive_deref::*;
+use itertools::Itertools;
 use serde::Deserialize;
-use std::cmp::{Ordering, min};
+use std::cmp::{min, Ordering};
 use std::collections::VecDeque;
 use std::ops::{Add, RangeFrom};
 use std::usize;
@@ -22,6 +23,12 @@ pub struct Coordinate(IVec2);
 impl Coordinate {
     pub fn inner_copy(&self) -> IVec2 {
         self.0
+    }
+}
+
+impl Ord for Coordinate {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(&other).unwrap_or(Ordering::Equal)
     }
 }
 
@@ -78,7 +85,7 @@ impl AssetID for Cultivation {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Terrain {
     Normal,
     Mountain,
@@ -100,11 +107,10 @@ impl AssetID for Terrain {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct CultivationInformation {
     cultivation: Cultivation,
     area_id: AreaID,
-    size: usize,
 }
 
 impl CultivationInformation {
@@ -115,10 +121,6 @@ impl CultivationInformation {
     pub fn area_id(&self) -> AreaID {
         self.area_id
     }
-
-    pub fn size(&self) -> usize {
-        self.size
-    }
 }
 
 impl From<Cultivation> for CultivationInformation {
@@ -126,12 +128,11 @@ impl From<Cultivation> for CultivationInformation {
         Self {
             cultivation: c,
             area_id: AreaID(0),
-            size: 0,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd)]
 pub struct Field {
     pub cultivation: Option<CultivationInformation>,
     terrain: Terrain,
@@ -163,15 +164,29 @@ impl Field {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AreaInfo{
-    pub size: usize,
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AreaInfo {
     pub kind: Cultivation,
+    pub field_coords: Vec<Coordinate>,
 }
 
-#[derive(Deref, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord ,Hash)]
-pub struct AreaID(usize);
+impl AreaInfo {
+    pub fn size(&self) -> usize {
+        self.field_coords.len()
+    }
+}
 
+impl From<Cultivation> for AreaInfo {
+    fn from(c: Cultivation) -> Self {
+        Self {
+            kind: c,
+            field_coords: Vec::default(),
+        }
+    }
+}
+
+#[derive(Deref, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AreaID(usize);
 
 #[derive(Debug)]
 pub struct Grid {
@@ -245,7 +260,7 @@ impl Grid {
         }
     }
 
-    fn next_area_id(&mut self)-> AreaID{
+    fn next_area_id(&mut self) -> AreaID {
         AreaID(self.area_counter.next().unwrap())
     }
 
@@ -264,6 +279,8 @@ impl Grid {
         }
 
         let id = self.next_area_id();
+        self.area_infos
+            .insert(id, AreaInfo::from(shape.cultivation()));
         self.propagate_id(coord, id, &shape.cultivation());
     }
 
@@ -283,58 +300,64 @@ impl Grid {
                 .unwrap()
                 .area_id = id;
 
-            for neighbor_pos in self.neighbor_indices(&pos) {
-                let field = self.at(&neighbor_pos).unwrap();
-
+            let mut area_ids_to_remove:HashSet<AreaID> = HashSet::default(); // we are immutable iterating over neighbors, we cannot remove the AreaIDs on the fly
+            for field in self.neighbors(&pos) {
                 if let Some(area_info) = field.cultivation {
-                    if area_info.area_id < id && area_info.cultivation == *cultivation {
-                        queue.push_front(neighbor_pos);
+                    if area_info.area_id() < id && area_info.cultivation == *cultivation {
+                        queue.push_front(field.position());
                         // the old id has been flooded, time to delete if from known id's (if not happened in earlier iteration)
-                        self.area_infos.remove_entry(&area_info.area_id);
+                        area_ids_to_remove.insert(area_info.area_id());
+                        
                     }
                 }
             }
+
+            for id in area_ids_to_remove.iter(){
+                self.area_infos.remove_entry(id);}
         }
 
         fields.dedup();
-        let size = fields.len();
-        for field_pos in fields {
-            self.at_mut(&field_pos)
-                .as_mut()
-                .unwrap()
-                .cultivation
-                .as_mut()
-                .unwrap()
-                .size = size;
-        }
-
-        self.area_infos.insert(id, AreaInfo{kind: *cultivation, size:size});
+        self.area_infos.insert(
+            id,
+            AreaInfo {
+                kind: *cultivation,
+                field_coords: fields,
+            },
+        );
     }
 
-    // I would like to have an iterator to `&Field` here, but then I would have to `split` which is unpleasant, so this has to suffice :(
-    pub fn neighbor_indices(&self, coord: &Coordinate) -> Vec<Coordinate> {
+    pub fn mountains(&self)-> impl Iterator<Item=&Field>{
+        self.all().filter(|&f|f.terrain() == Terrain::Mountain)
+    }
+
+    pub fn neighbors(&self, coord: &Coordinate) -> impl Iterator<Item=&Field> {
         let top = *coord + (0, 1).into();
         let bottom = *coord + (0, -1).into();
         let right = *coord + (1, 0).into();
         let left = *coord + (-1, 0).into();
         vec![top, bottom, right, left]
             .into_iter()
-            .filter(|c| self.is_valid_coord(c))
-            .collect()
+            .filter(move |c| self.is_valid_coord(c))
+            .map(move |c| self.at(&c).unwrap())
     }
 
     /// returns ids of components sorted by size (biggest first)
-    pub fn area_ids(&self, cultivation: Cultivation)-> Vec<(AreaID, AreaInfo)>{
+    pub fn area_ids(&self, cultivation: Cultivation) -> impl Iterator<Item = (&AreaID, &AreaInfo)> {
+        (&self.area_infos)
+            .iter()
+            .filter(move |&(_, info)| info.kind == cultivation)
+    }
 
-        let mut result:Vec<(AreaID, AreaInfo)> = Vec::default();
-        for (&k, &v) in self.area_infos.iter(){
-            if v.kind == cultivation {
-                // (k,v) can not be created by copying from (&k, &v), thus the destructuring
-                result.push((k,v));
-            }
-        }
-        result.sort_by(|&lhs, &rhs| lhs.1.cmp(&rhs.1).reverse());
-        result
+    pub fn area_neighbors(&self, id: &AreaID) -> impl Iterator<Item = &Field> {
+        self
+            .area_infos
+            .get(&id)
+            .unwrap()
+            .field_coords
+            .iter()
+            .map(move |&field| self.neighbors(&field))
+            .flatten()
+            .dedup()
     }
 
     pub fn accepts_geometry(&self, geom: &Geometry, ruins: &RuinIndicator) -> bool {
