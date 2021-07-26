@@ -300,20 +300,20 @@ impl Grid {
                 .unwrap()
                 .area_id = id;
 
-            let mut area_ids_to_remove:HashSet<AreaID> = HashSet::default(); // we are immutable iterating over neighbors, we cannot remove the AreaIDs on the fly
+            let mut area_ids_to_remove: HashSet<AreaID> = HashSet::default(); // we are immutable iterating over neighbors, we cannot remove the AreaIDs on the fly
             for field in self.neighbors(&pos) {
                 if let Some(area_info) = field.cultivation {
                     if area_info.area_id() < id && area_info.cultivation == *cultivation {
                         queue.push_front(field.position());
                         // the old id has been flooded, time to delete if from known id's (if not happened in earlier iteration)
                         area_ids_to_remove.insert(area_info.area_id());
-                        
                     }
                 }
             }
 
-            for id in area_ids_to_remove.iter(){
-                self.area_infos.remove_entry(id);}
+            for id in area_ids_to_remove.iter() {
+                self.area_infos.remove_entry(id);
+            }
         }
 
         fields.dedup();
@@ -326,11 +326,11 @@ impl Grid {
         );
     }
 
-    pub fn mountains(&self)-> impl Iterator<Item=&Field>{
-        self.all().filter(|&f|f.terrain() == Terrain::Mountain)
+    pub fn mountains(&self) -> impl Iterator<Item = &Field> {
+        self.all().filter(|&f| f.terrain() == Terrain::Mountain)
     }
 
-    pub fn neighbors(&self, coord: &Coordinate) -> impl Iterator<Item=&Field> {
+    pub fn neighbors(&self, coord: &Coordinate) -> impl Iterator<Item = &Field> {
         let top = *coord + (0, 1).into();
         let bottom = *coord + (0, -1).into();
         let right = *coord + (1, 0).into();
@@ -349,8 +349,7 @@ impl Grid {
     }
 
     pub fn area_neighbors(&self, id: &AreaID) -> impl Iterator<Item = &Field> {
-        self
-            .area_infos
+        self.area_infos
             .get(&id)
             .unwrap()
             .field_coords
