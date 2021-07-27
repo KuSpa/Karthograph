@@ -468,9 +468,17 @@ impl Grid {
         self.inner.iter()
     }
 
+    pub fn rows(&self) -> impl Iterator<Item = impl Iterator<Item = &Field>> {
+        (0..Self::SIZE).map(move |nth| self.row(nth))
+    }
+
     // use result for safety?
     pub fn row(&self, nth: usize) -> impl Iterator<Item = &Field> {
         self.inner.iter().skip(nth * Self::SIZE).take(Self::SIZE)
+    }
+
+    pub fn columns(&self) -> impl Iterator<Item = impl Iterator<Item = &Field>> {
+        (0..Self::SIZE).map(move |nth| self.column(nth))
     }
 
     // use result for safety?

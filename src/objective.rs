@@ -231,3 +231,33 @@ impl Objective for GoldenCorn {
         score
     }
 }
+
+struct Grenzland;
+
+impl AssetID for Grenzland {
+    fn asset_id(&self) -> &'static str {
+        "grenzland"
+    }
+}
+
+impl Objective for Grenzland {
+    fn name(&self) -> &'static str {
+        "Grenzland"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for mut iter in grid.rows() {
+            if iter.all(|field| !field.is_free()) {
+                score += 6;
+            }
+        }
+
+        for mut col in grid.columns() {
+            if col.all(|field| !field.is_free()) {
+                score += 6;
+            }
+        }
+        score
+    }
+}
