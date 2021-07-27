@@ -261,3 +261,37 @@ impl Objective for Grenzland {
         score
     }
 }
+
+struct Gruenflaeche;
+
+impl AssetID for Gruenflaeche {
+    fn asset_id(&self) -> &'static str {
+        "gruenflaeche"
+    }
+}
+
+impl Objective for Gruenflaeche {
+    fn name(&self) -> &'static str {
+        "Grünfläche"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for mut row in grid.rows() {
+            if row.any(|field| {
+                field.cultivation.as_ref().map(|f| f.cultivation()) == Some(&Cultivation::Forest)
+            }) {
+                score += 1;
+            }
+        }
+
+        for mut col in grid.columns() {
+            if col.any(|field| {
+                field.cultivation.as_ref().map(|f| f.cultivation()) == Some(&Cultivation::Forest)
+            }) {
+                score += 1;
+            }
+        }
+        score
+    }
+}
