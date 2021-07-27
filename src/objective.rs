@@ -295,3 +295,58 @@ impl Objective for Gruenflaeche {
         score
     }
 }
+
+struct AusgedehnteStraende;
+
+impl AssetID for AusgedehnteStraende {
+    fn asset_id(&self) -> &'static str {
+        "ausgedehnte_straende"
+    }
+}
+
+impl Objective for AusgedehnteStraende {
+    fn name(&self) -> &'static str {
+        "Ausgedehnte Strände"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for (&id, info) in grid.area_ids(Cultivation::Water) {
+            let mut neighbors = grid.area_neighbors(&id);
+            if neighbors.any(|f| {
+                f.cultivation.as_ref().map(|f| f.cultivation()) == Some(&Cultivation::Farm)
+            }) {
+                continue;
+            }
+
+            if info
+                .field_coords
+                .iter()
+                .any(|pos| grid.neighbors(pos).count() < 4)
+            {
+                continue;
+            }
+            score += 3;
+        }
+
+        for (&id, info) in grid.area_ids(Cultivation::Farm) {
+            let mut neighbors = grid.area_neighbors(&id);
+            if neighbors.any(|f| {
+                f.cultivation.as_ref().map(|f| f.cultivation()) == Some(&Cultivation::Water)
+            }) {
+                continue;
+            }
+
+            if info
+                .field_coords
+                .iter()
+                .any(|pos| grid.neighbors(pos).count() < 4)
+            {
+                continue;
+            }
+            score += 3;
+        }
+
+        score
+    }
+}
