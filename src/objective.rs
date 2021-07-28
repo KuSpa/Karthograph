@@ -374,3 +374,35 @@ impl Objective for SchildDesReichs {
         }
     }
 }
+
+struct SchillerndeEbene;
+
+impl AssetID for SchillerndeEbene {
+    fn asset_id(&self) -> &'static str {
+        "schillernde_ebene"
+    }
+}
+
+impl Objective for SchillerndeEbene {
+    fn name(&self) -> &'static str {
+        "Schillernde Ebene"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for (id, _) in grid.area_ids(Cultivation::Village) {
+            if grid
+                .area_neighbors(id)
+                .filter_map(|f| f.cultivation.as_ref().map(|f| f.cultivation()))
+                .sorted()
+                .dedup()
+                .count()
+                >= 3
+            {
+                score += 3;
+            }
+        }
+
+        score
+    }
+}
