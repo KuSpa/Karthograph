@@ -350,3 +350,27 @@ impl Objective for AusgedehnteStraende {
         score
     }
 }
+
+struct SchildDesReichs;
+
+impl AssetID for SchildDesReichs {
+    fn asset_id(&self) -> &'static str {
+        "schild_des_reichs"
+    }
+}
+
+impl Objective for SchildDesReichs {
+    fn name(&self) -> &'static str {
+        "SchildDesReichs"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        if let Some((_, second_largest_village)) =
+            grid.area_ids(Cultivation::Village).skip(1).next()
+        {
+            Score(second_largest_village.size())
+        } else {
+            Score::default()
+        }
+    }
+}
