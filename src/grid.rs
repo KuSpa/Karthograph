@@ -26,11 +26,11 @@ impl Coordinate {
     }
 }
 
-/*impl Ord for Coordinate {
+impl Ord for Coordinate {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(&other).unwrap_or(Ordering::Equal)
     }
-}*/
+}
 
 impl From<(usize, usize)> for Coordinate {
     fn from((x, y): (usize, usize)) -> Self {
@@ -184,7 +184,7 @@ impl PartialOrd for AreaInfo {
 
 impl Ord for AreaInfo {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.size().cmp(&other.size()).reverse()
+        self.size().cmp(&other.size())
     }
 }
 
@@ -328,6 +328,7 @@ impl Grid {
             }
         }
 
+        fields.sort();
         fields.dedup();
         self.area_infos.insert(
             id,
@@ -362,6 +363,8 @@ impl Grid {
         (&self.area_infos)
             .iter()
             .filter(move |&(_, info)| info.kind == cultivation)
+            .sorted_by(|lhs, rhs| lhs.1.cmp(&rhs.1))
+            .rev()
     }
 
     pub fn area_neighbors(&self, id: &AreaID) -> impl Iterator<Item = &Field> {
