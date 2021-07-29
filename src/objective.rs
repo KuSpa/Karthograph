@@ -476,3 +476,57 @@ impl Objective for DieKessel {
         )
     }
 }
+
+struct Schildwald;
+
+impl AssetID for Schildwald {
+    fn asset_id(&self) -> &'static str {
+        "schildwald"
+    }
+}
+
+impl Objective for Schildwald {
+    fn name(&self) -> &'static str {
+        "Schildwald"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+
+        // top and bottom row
+        score += grid
+            .row(0)
+            .filter(|&field| {
+                field.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Forest)
+            })
+            .count();
+
+        score += grid
+            .row(Grid::SIZE - 1)
+            .filter(|&field| {
+                field.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Forest)
+            })
+            .count();
+
+        // left and right column - corners
+        score += grid
+            .column(0)
+            .skip(1)
+            .take(Grid::SIZE - 2)
+            .filter(|&field| {
+                field.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Forest)
+            })
+            .count();
+
+        score += grid
+            .column(Grid::SIZE - 1)
+            .skip(1)
+            .take(Grid::SIZE - 2)
+            .filter(|&field| {
+                field.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Forest)
+            })
+            .count();
+
+        score
+    }
+}
