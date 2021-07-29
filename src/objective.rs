@@ -1,4 +1,8 @@
-use std::ops::AddAssign;
+use std::{
+    cmp::{max, min},
+    convert::TryInto,
+    ops::AddAssign,
+};
 
 use itertools::Itertools;
 
@@ -404,5 +408,44 @@ impl Objective for SchillerndeEbene {
         }
 
         score
+    }
+}
+
+struct UnzugaenglicheBaronie;
+
+impl AssetID for UnzugaenglicheBaronie {
+    fn asset_id(&self) -> &'static str {
+        "unzugaengliche_baronie"
+    }
+}
+
+impl Objective for UnzugaenglicheBaronie {
+    fn name(&self) -> &'static str {
+        "Unzugängliche Baronie"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        // stores the biggest square having this field as bottom right corner
+        let mut matrix = [[0; Grid::SIZE]; Grid::SIZE];
+        let mut result = 0;
+        for x in 0..Grid::SIZE {
+            for y in 0..Grid::SIZE {
+                // safe: we are within the gridsize
+                if grid.at(&(x, y).into()).unwrap().is_free() {
+                    continue;
+                }
+                let left = if x > 0 { matrix[x - 1][y] } else { 0 };
+                let right = if y > 0 { matrix[x][y - 1] } else { 0 };
+                let diagonal = if left > 0 && right > 0 {
+                    matrix[x - 1][y - 1]
+                } else {
+                    0
+                };
+
+                matrix[x][y] = 1 + min(min(left, right), diagonal);
+                result = max(result, matrix[x][y]);
+            }
+        }
+        Score(result)
     }
 }
