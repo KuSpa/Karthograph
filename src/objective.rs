@@ -449,3 +449,30 @@ impl Objective for UnzugaenglicheBaronie {
         Score(result)
     }
 }
+
+struct DieKessel;
+
+impl AssetID for DieKessel {
+    fn asset_id(&self) -> &'static str {
+        "die_kessel"
+    }
+}
+
+impl Objective for DieKessel {
+    fn name(&self) -> &'static str {
+        "Die Kessel"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        Score(
+            grid.all()
+                .filter(|field| {
+                    field.is_free()
+                        && grid
+                            .neighbors(&field.position())
+                            .all(|neigh| !neigh.is_free())
+                })
+                .count(),
+        )
+    }
+}
