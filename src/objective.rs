@@ -530,3 +530,39 @@ impl Objective for Schildwald {
         score
     }
 }
+
+struct Bewaesserungskanal;
+
+impl AssetID for Bewaesserungskanal {
+    fn asset_id(&self) -> &'static str {
+        "bewaesserungskanal"
+    }
+}
+
+impl Objective for Bewaesserungskanal {
+    fn name(&self) -> &'static str {
+        "Bewässerungskanal"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        let mut score = Score::default();
+        for field in grid.all() {
+            if let Some(Cultivation::Farm) = field.cultivation.as_ref().map(|i| i.cultivation()) {
+                if grid.neighbors(&field.position()).any(|f| {
+                    f.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Water)
+                }) {
+                    score += 1;
+                }
+            }
+
+            if let Some(Cultivation::Water) = field.cultivation.as_ref().map(|i| i.cultivation()) {
+                if grid.neighbors(&field.position()).any(|f| {
+                    f.cultivation.as_ref().map(|i| i.cultivation()) == Some(&Cultivation::Farm)
+                }) {
+                    score += 1;
+                }
+            }
+        }
+        score
+    }
+}
