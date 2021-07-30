@@ -17,7 +17,9 @@ const SPRITE_SIZE: f32 = 75.;
 const GRID_SIZE: usize = 11;
 //x=y offset
 const GRID_OFFSET: f32 = SPRITE_SIZE;
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone, Copy, Deserialize, Deref, DerefMut)]
+#[derive(
+    Debug, Default, PartialEq, Eq, PartialOrd, Clone, Copy, Deserialize, Deref, DerefMut, Hash,
+)]
 pub struct Coordinate(IVec2);
 
 impl Coordinate {
@@ -85,7 +87,7 @@ impl AssetID for Cultivation {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Terrain {
     Normal,
     Mountain,
@@ -107,7 +109,7 @@ impl AssetID for Terrain {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CultivationInformation {
     cultivation: Cultivation,
     area_id: AreaID,
@@ -132,7 +134,7 @@ impl From<Cultivation> for CultivationInformation {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Field {
     pub cultivation: Option<CultivationInformation>,
     terrain: Terrain,

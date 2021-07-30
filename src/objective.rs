@@ -4,11 +4,12 @@ use std::{
     ops::AddAssign,
 };
 
+use bevy::utils::HashMap;
 use itertools::Itertools;
 
 use crate::{
     asset_management::AssetID,
-    grid::{Cultivation, Grid, Terrain},
+    grid::{Coordinate, Cultivation, Grid, Terrain},
     seasons::{Season, SeasonType},
 };
 
@@ -564,5 +565,43 @@ impl Objective for Bewaesserungskanal {
             }
         }
         score
+    }
+}
+
+struct PfadDesWaldes;
+
+impl AssetID for PfadDesWaldes {
+    fn asset_id(&self) -> &'static str {
+        "pfad_des_waldes"
+    }
+}
+
+impl Objective for PfadDesWaldes {
+    fn name(&self) -> &'static str {
+        "Pfad des Waldes"
+    }
+
+    fn score(&self, grid: &Grid) -> Score {
+        // union find on mountains, every forest is a union
+        // however, we don't really care how the resulting structure is, just IF the mountain has been joint with others
+        let mut union_find: HashMap<Coordinate, bool> =
+            grid.mountains().map(|f| (f.position(), false)).collect();
+        for (forest_id, _) in grid.area_ids(Cultivation::Forest) {
+            let mut neighbor_mountains = grid
+                .area_neighbors(forest_id)
+                .filter(|f| f.terrain() == Terrain::Mountain)
+                // mountains can occur more than once as neighbors of an area
+                // however, as soon as there are two different mountains we set all to true anyway
+                // so we do not need to sort before dedup()
+                .dedup();
+            if let Some(first_mountain) = neighbor_mountains.next() {
+                for second_mountain in neighbor_mountains {
+                    // the "union"
+                    union_find.insert(first_mountain.position(), true);
+                    union_find.insert(second_mountain.position(), true);
+                }
+            }
+        }
+        Score(union_find.iter().filter(|&k_v| *k_v.1).count() * 3)
     }
 }
