@@ -6,7 +6,7 @@ You play with up to infinitely many players at the same time (if you got that ma
 
 There are four seasons, each of which have certain (random) objectives to fulfil and a certain number of shape cards to be played. The objectives are known from the beginning, so each player should place their shapes with the objectives in mind.
 
-The player with the most points (which he gets by fulfilling the objectives) wins in the end.
+The player with the most points (which they get by fulfilling the objectives) wins in the end.
 
 ## The (implemented) Game
 ### Overview
