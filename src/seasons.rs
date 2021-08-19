@@ -1,4 +1,7 @@
-use bevy::prelude::{Res, ResMut, State};
+use bevy::{
+    prelude::{Query, Res, ResMut, State},
+    text::Text,
+};
 
 use crate::{grid::Grid, objective::GameObjectives, GameState};
 
@@ -54,6 +57,15 @@ impl SeasonType {
             Self::Winter => None,
         }
     }
+
+    pub fn marker(&self) -> SeasonMarker {
+        match &self {
+            Self::Spring => SeasonMarker::Spring,
+            Self::Summer => SeasonMarker::Summer,
+            Self::Autumn => SeasonMarker::Autumn,
+            Self::Winter => SeasonMarker::Winter,
+        }
+    }
 }
 
 impl Default for SeasonType {
@@ -62,15 +74,37 @@ impl Default for SeasonType {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum SeasonMarker {
+    Spring,
+    Summer,
+    Autumn,
+    Winter,
+}
+
 pub fn score_season(
     mut state: ResMut<State<GameState>>,
+    mut ui_query: Query<(&mut Text, &SeasonMarker)>,
     season: Res<Season>,
-    objectives: Res<GameObjectives>,
+    mut objectives: ResMut<GameObjectives>,
     grid: Res<Grid>,
 ) {
-    let (first, second) = objectives.objectives_for_season(&season);
-    println!("{:?} scored {:?}", first.name(), first.score(&grid));
-    println!("{:?} scored {:?}", second.name(), second.score(&grid));
+    let (first, second) = objectives.score_season(season.season_type(), &grid);
+    // fetch season UI
+    ui_query
+        .iter_mut()
+        .filter(|&(_, marker)| marker == &season.season_type().marker())
+        .for_each(|(mut t, _)| {
+            if t.sections[0].value == first.0 {
+                t.sections[1].value = first.1.to_string();
+            };
+            if t.sections[0].value == second.0 {
+                t.sections[1].value = second.1.to_string();
+            };
+        });
+
+    println!("{:?} scored {:?}", first.0, first.1);
+    println!("{:?} scored {:?}", second.0, second.1);
     /* TODO: mountains, coins, UI */
     state.pop().unwrap();
 }

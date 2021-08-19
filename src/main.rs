@@ -9,6 +9,7 @@ use objective::GameObjectives;
 use seasons::{end_scoring, score_season, Season};
 use shape::*;
 use std::usize;
+use ui::{setup_objective_ui, setup_ui};
 
 mod asset_management;
 mod card;
@@ -18,6 +19,7 @@ mod mouse;
 mod objective;
 mod seasons;
 mod shape;
+mod ui;
 mod util;
 
 pub const SPRITE_SIZE: f32 = 75.;
@@ -37,6 +39,7 @@ fn main() {
         .add_asset::<CardPile>()
         .init_asset_loader::<CardPileLoader>()
         .add_startup_system(init_camera.system())
+        .add_startup_system(setup_ui.system())
         .add_state(GameState::Loading)
         .add_system_set(SystemSet::on_enter(GameState::Loading).with_system(init_assets.system()))
         .add_system_set(
@@ -44,7 +47,9 @@ fn main() {
         )
         .add_system_set(SystemSet::on_exit(GameState::Loading).with_system(init_grid.system()))
         .add_system_set(
-            SystemSet::on_enter(GameState::SeasonState).with_system(initialize_cards.system()),
+            SystemSet::on_enter(GameState::SeasonState)
+                .with_system(initialize_cards.system())
+                .with_system(setup_objective_ui.system()),
         )
         .add_system_set(
             SystemSet::on_resume(GameState::SeasonState).with_system(initialize_cards.system()),
