@@ -1,26 +1,35 @@
 use std::{
     cmp::{max, min},
-    convert::TryInto,
+    fmt::{self, Debug},
     ops::AddAssign,
 };
-
-use bevy::utils::HashMap;
-use itertools::Itertools;
 
 use crate::{
     asset_management::AssetID,
     grid::{Coordinate, Cultivation, Grid, Terrain},
-    seasons::{Season, SeasonType},
+    seasons::SeasonType,
 };
+use bevy::utils::HashMap;
+use itertools::Itertools;
+use rand::{prelude::SliceRandom, thread_rng};
 
 /* I really like this too, but its unintuitive when reading
 struct Objective{scoring: fn(&Grid)->u32,}*/
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Score(usize);
 impl AddAssign<usize> for Score {
     fn add_assign(&mut self, rhs: usize) {
         self.0 += rhs
+    }
+}
+
+impl fmt::Display for Score {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.0 {
+            0 => write!(f, "-"),
+            inner => std::fmt::Display::fmt(&inner, f),
+        }
     }
 }
 
@@ -32,27 +41,72 @@ pub trait Objective: AssetID {
 
 pub struct GameObjectives {
     objectives: [Box<dyn Objective + Send + Sync>; 4],
+    scores: [Option<((&'static str, Score), (&'static str, Score))>; 4],
 }
 impl GameObjectives {
-    pub fn objectives_for_season(&self, season: &Season) -> (&dyn Objective, &dyn Objective) {
-        match &season.season_type() {
-            SeasonType::Spring => (&*self.objectives[0], &*self.objectives[1]),
-            SeasonType::Summer => (&*self.objectives[1], &*self.objectives[2]),
-            SeasonType::Autumn => (&*self.objectives[2], &*self.objectives[3]),
-            SeasonType::Winter => (&*self.objectives[3], &*self.objectives[0]),
+    pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
+        (
+            &*self.objectives[Self::idx(season)],
+            &*self.objectives[(Self::idx(season) + 1) % 3],
+        )
+    }
+
+    fn idx(season: &SeasonType) -> usize {
+        match &season {
+            SeasonType::Spring => 0,
+            SeasonType::Summer => 1,
+            SeasonType::Autumn => 2,
+            SeasonType::Winter => 3,
         }
+    }
+
+    pub fn score_season(
+        &mut self,
+        season: &SeasonType,
+        grid: &Grid,
+    ) -> ((&'static str, Score), (&'static str, Score)) {
+        let idx = Self::idx(season);
+        if self.scores[idx].is_none() {
+            let (first, second) = self.objectives_for_season(season);
+            self.scores[idx] = Some((
+                (first.name(), first.score(grid)),
+                (second.name(), second.score(grid)),
+            ));
+        }
+        self.scores[idx].unwrap()
     }
 }
 
 impl Default for GameObjectives {
     fn default() -> Self {
+        let mut objectives: Vec<Box<dyn Objective + Send + Sync>> = vec![
+            Box::new(PfadDesWaldes),
+            Box::new(Metropole),
+            Box::new(SchildDesReichs),
+            Box::new(AusgedehnteStraende),
+            Box::new(Gruenflaeche),
+            Box::new(Grenzland),
+            Box::new(GoldenCorn),
+            Box::new(TalDerMagier),
+            Box::new(LongRoad),
+            Box::new(DuesterWald),
+            Box::new(SchillerndeEbene),
+            Box::new(Schildwald),
+            Box::new(DieKessel),
+            Box::new(UnzugaenglicheBaronie),
+            Box::new(Bewaesserungskanal),
+            Box::new(BastionInTheWilderness),
+        ];
+        objectives.shuffle(&mut thread_rng());
+
         Self {
             objectives: [
-                Box::new(BastionInTheWilderness),
-                Box::new(GoldenCorn),
-                Box::new(BastionInTheWilderness),
-                Box::new(Metropole),
+                objectives.pop().unwrap(),
+                objectives.pop().unwrap(),
+                objectives.pop().unwrap(),
+                objectives.pop().unwrap(),
             ],
+            scores: Default::default(),
         }
     }
 }
@@ -370,9 +424,7 @@ impl Objective for SchildDesReichs {
     }
 
     fn score(&self, grid: &Grid) -> Score {
-        if let Some((_, second_largest_village)) =
-            grid.area_ids(Cultivation::Village).skip(1).next()
-        {
+        if let Some((_, second_largest_village)) = grid.area_ids(Cultivation::Village).nth(1) {
             Score(second_largest_village.size())
         } else {
             Score::default()
