@@ -85,6 +85,7 @@ impl Default for Geometry {
 
 #[derive(Clone)]
 pub struct Shape {
+    coin: bool,
     geometry: Geometry,
     cultivation: Cultivation,
     ruin: RuinIndicator,
