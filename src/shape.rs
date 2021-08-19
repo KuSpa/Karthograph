@@ -5,10 +5,11 @@ use crate::asset_management::{AssetID, AssetManager};
 use crate::card::{Card, RuinIndicator};
 use crate::card_pile::NewCard;
 use crate::grid::{Coordinate, Cultivation, Grid};
+use crate::objective::GameObjectives;
 use crate::util::min_f;
 use crate::SPRITE_SIZE;
 use bevy::input::mouse::{MouseButtonInput, MouseWheel};
-use bevy::prelude::*;
+use bevy::{log, prelude::*};
 //TODO MIRROR
 
 #[derive(Clone, Deserialize, Deref, DerefMut)]
@@ -92,11 +93,12 @@ pub struct Shape {
 }
 
 impl Shape {
-    pub fn new(g: &Geometry, cult: &Cultivation, ruin: &RuinIndicator) -> Self {
+    pub fn new(g: &Geometry, cult: &Cultivation, ruin: &RuinIndicator, coin: bool) -> Self {
         Self {
             geometry: g.clone(),
             cultivation: *cult,
             ruin: *ruin,
+            coin: coin,
         }
     }
 
@@ -181,6 +183,7 @@ impl Default for Shape {
             geometry,
             cultivation: Cultivation::Village,
             ruin: false.into(),
+            coin: false,
         }
     }
 }
@@ -257,6 +260,7 @@ pub fn place_shape(
     mut next_card: EventWriter<NewCard>,
     assets: Res<AssetManager>,
     mut handles: Query<&mut Handle<ColorMaterial>>,
+    mut objectives: ResMut<GameObjectives>,
 ) {
     for event in clicks.iter() {
         if event.button == MouseButton::Left && event.state.is_pressed() {
@@ -265,6 +269,18 @@ pub fn place_shape(
                 let grid_position = Grid::screen_to_grid(position);
                 if let Ok(()) = grid.try_cultivate(shape, &grid_position, &assets, &mut handles) {
                     // the magic happens in try_cultivate, if this is successful, all thats left to do is to despawn the shape and the card
+
+                    if shape.coin {
+                        objectives.add_coin(/* add coords of shape here */);
+                        log::info!("coin was added");
+                    }
+
+                    /* if mountain was enclosed {
+                        objectives.add_coin(/* add mountain coord */)
+                    }
+
+                    */
+
                     com.entity(t_entity).despawn_recursive();
                     if let Ok((card_entity, _)) = card.single() {
                         com.entity(card_entity).despawn_recursive();

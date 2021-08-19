@@ -24,6 +24,12 @@ impl AddAssign<usize> for Score {
     }
 }
 
+pub struct SeasonScore {
+    pub a: (&'static str, Score),
+    pub b: (&'static str, Score),
+    pub coin_count: usize,
+}
+
 impl fmt::Display for Score {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.0 {
@@ -41,7 +47,8 @@ pub trait Objective: AssetID {
 
 pub struct GameObjectives {
     objectives: [Box<dyn Objective + Send + Sync>; 4],
-    scores: [Option<((&'static str, Score), (&'static str, Score))>; 4],
+    scores: [Option<SeasonScore>; 4],
+    current_coins: usize,
 }
 impl GameObjectives {
     pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
@@ -60,20 +67,22 @@ impl GameObjectives {
         }
     }
 
-    pub fn score_season(
-        &mut self,
-        season: &SeasonType,
-        grid: &Grid,
-    ) -> ((&'static str, Score), (&'static str, Score)) {
+    pub fn add_coin(&mut self) {
+        self.current_coins += 1;
+    }
+
+    pub fn score_season(&mut self, season: &SeasonType, grid: &Grid) -> &SeasonScore {
         let idx = Self::idx(season);
         if self.scores[idx].is_none() {
             let (first, second) = self.objectives_for_season(season);
-            self.scores[idx] = Some((
-                (first.name(), first.score(grid)),
-                (second.name(), second.score(grid)),
-            ));
+            self.scores[idx] = Some(SeasonScore {
+                a: (first.name(), first.score(grid)),
+                b: (second.name(), second.score(grid)),
+                coin_count: self.current_coins,
+            });
         }
-        self.scores[idx].unwrap()
+
+        self.scores[idx].as_ref().unwrap()
     }
 }
 
@@ -107,6 +116,7 @@ impl Default for GameObjectives {
                 objectives.pop().unwrap(),
             ],
             scores: Default::default(),
+            current_coins: Default::default(),
         }
     }
 }

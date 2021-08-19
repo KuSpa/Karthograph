@@ -3,7 +3,11 @@ use bevy::{
     text::Text,
 };
 
-use crate::{grid::Grid, objective::GameObjectives, GameState};
+use crate::{
+    grid::Grid,
+    objective::{GameObjectives, SeasonScore},
+    GameState,
+};
 
 #[derive(Default, Debug)]
 pub struct Season {
@@ -89,7 +93,12 @@ pub fn score_season(
     mut objectives: ResMut<GameObjectives>,
     grid: Res<Grid>,
 ) {
-    let (first, second) = objectives.score_season(season.season_type(), &grid);
+    let SeasonScore {
+        a: first,
+        b: second,
+        coin_count,
+    } = objectives.score_season(season.season_type(), &grid);
+
     // fetch season UI
     ui_query
         .iter_mut()
@@ -105,7 +114,8 @@ pub fn score_season(
 
     println!("{:?} scored {:?}", first.0, first.1);
     println!("{:?} scored {:?}", second.0, second.1);
-    /* TODO: mountains, coins, UI */
+    println!("{:?} coins were collected", coin_count);
+    // TODO: coin ui
     state.pop().unwrap();
 }
 

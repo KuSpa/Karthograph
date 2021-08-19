@@ -181,9 +181,10 @@ impl ShapeDefinition {
 
         let normal_handle = assets.fetch("default").unwrap();
 
+        // all coins are on the left choice of shape cards
         let left_spawner =
-            CardClickEvent::SpawnShape(Shape::new(&self.left, &self.cultivation, ruin));
-        let left_children: Vec<Entity> = self
+            CardClickEvent::SpawnShape(Shape::new(&self.left, &self.cultivation, ruin, true));
+        let mut left_children: Vec<Entity> = self
             .left
             .as_transforms_centered(max_size, 0.2)
             .iter()
@@ -201,6 +202,21 @@ impl ShapeDefinition {
             .collect();
         // TODO: depending on how large the shape is, one should adapt this transform
         let left_transform = Transform::from_xyz(-area.x / 2. - 10., -area.y / 2. - 10., 0.);
+
+        let coin_handle = assets.fetch("coin").unwrap();
+        let coin_transform = Transform::from_xyz(0., -100., 0.1);
+        //left coin
+        left_children.push(
+            com.spawn()
+                .insert_bundle(SpriteBundle {
+                    sprite: Sprite::new(Vec2::new(50., 50.)),
+                    material: coin_handle.clone(),
+                    transform: coin_transform,
+                    ..Default::default()
+                })
+                .id(),
+        );
+
         let left = com
             .spawn()
             .insert(left_transform)
@@ -210,7 +226,7 @@ impl ShapeDefinition {
         children.push(left);
 
         let right_spawner =
-            CardClickEvent::SpawnShape(Shape::new(&self.right, &self.cultivation, ruin));
+            CardClickEvent::SpawnShape(Shape::new(&self.right, &self.cultivation, ruin, false));
         let right_children: Vec<Entity> = self
             .right
             .as_transforms_centered(max_size, 0.2)
@@ -284,7 +300,8 @@ impl CultivationDefinition {
 
         // Cultivation children
         let left_transform = Transform::from_xyz(-50., -50., 0.1);
-        let left_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin));
+        let left_spawn =
+            CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.left, ruin, false));
         let left_mat = assets.fetch(self.left.asset_id()).unwrap();
         children.push(
             com.spawn()
@@ -299,7 +316,8 @@ impl CultivationDefinition {
         );
 
         let right_transform = Transform::from_xyz(50., -50., 0.1);
-        let right_spawn = CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.right, ruin));
+        let right_spawn =
+            CardClickEvent::SpawnShape(Shape::new(&self.geometry, &self.right, ruin, false));
         let right_mat = assets.fetch(self.right.asset_id()).unwrap();
         children.push(
             com.spawn()
@@ -336,23 +354,23 @@ impl SplinterDefinition {
         const SPLINTER_OFFSET: f32 = 75.;
         let shapes = vec![
             (
-                Shape::new(&geom, &Cultivation::Farm, ruin),
+                Shape::new(&geom, &Cultivation::Farm, ruin, false),
                 Transform::from_xyz(SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Goblin, ruin),
+                Shape::new(&geom, &Cultivation::Goblin, ruin, false),
                 Transform::from_xyz(SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Water, ruin),
+                Shape::new(&geom, &Cultivation::Water, ruin, false),
                 Transform::from_xyz(-SPLINTER_OFFSET, SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Village, ruin),
+                Shape::new(&geom, &Cultivation::Village, ruin, false),
                 Transform::from_xyz(-SPLINTER_OFFSET, -SPLINTER_OFFSET, 0.1),
             ),
             (
-                Shape::new(&geom, &Cultivation::Forest, ruin),
+                Shape::new(&geom, &Cultivation::Forest, ruin, false),
                 Transform::from_xyz(0., 0., 0.1),
             ),
         ];
