@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{card_pile::CardPile, GameState};
 
-const ASSETS: [(&str, &str); 9] = [
+const ASSETS: [(&str, &str); 10] = [
     ("mountain", "mountain.png"),
     ("ruin", "ruin.png"),
     ("default", "default.png"),
@@ -13,6 +13,7 @@ const ASSETS: [(&str, &str); 9] = [
     ("water", "water.png"),
     ("village", "village.png"),
     ("blank_card", "card.png"),
+    ("coin", "coin.png"),
 ];
 
 #[derive(Default)]
