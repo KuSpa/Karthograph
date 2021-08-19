@@ -28,9 +28,10 @@ impl Coordinate {
     }
 }
 
+#[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for Coordinate {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(&other).unwrap_or(Ordering::Equal)
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
     }
 }
 
@@ -365,7 +366,7 @@ impl Grid {
         (&self.area_infos)
             .iter()
             .filter(move |&(_, info)| info.kind == cultivation)
-            .sorted_by(|lhs, rhs| lhs.1.cmp(&rhs.1))
+            .sorted_by(|lhs, rhs| lhs.1.cmp(rhs.1))
             .rev()
     }
 
