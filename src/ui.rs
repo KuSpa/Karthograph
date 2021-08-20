@@ -110,6 +110,23 @@ fn setup_season_ui(
                 },
                 TextSection {
                     value: "".to_string(),
+                    style: text_style.clone(),
+                },
+            ],
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
+    let coin_child = TextBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: "coins".to_string(),
+                    style: text_style.clone(),
+                },
+                TextSection {
+                    value: "".to_string(),
                     style: text_style,
                 },
             ],
@@ -134,6 +151,7 @@ fn setup_season_ui(
             ..Default::default()
         })
         .with_children(|parent| {
+            parent.spawn_bundle(coin_child).insert(marker);
             parent.spawn_bundle(second_objective).insert(marker);
             parent.spawn_bundle(first_objective).insert(marker);
             parent.spawn_bundle(season_name);

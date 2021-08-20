@@ -110,6 +110,9 @@ pub fn score_season(
             if t.sections[0].value == second.0 {
                 t.sections[1].value = second.1.to_string();
             };
+            if t.sections[0].value == "Coins" {
+                t.sections[1].value = coin_count.to_string();
+            }
         });
 
     println!("{:?} scored {:?}", first.0, first.1);
