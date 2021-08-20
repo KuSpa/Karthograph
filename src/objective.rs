@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     asset_management::AssetID,
-    grid::{Coordinate, Cultivation, Grid, Terrain},
+    grid::{Coordinate, Cultivation, Grid},
     seasons::SeasonType,
 };
 use bevy::utils::HashMap;
@@ -168,10 +168,7 @@ impl Objective for TalDerMagier {
     fn score(&self, grid: &Grid) -> Score {
         let mut score = Score::default();
 
-        for field in grid
-            .all()
-            .filter(|field| field.terrain() == Terrain::Mountain)
-        {
+        for field in grid.all().filter(|field| field.terrain().is_mountain()) {
             for neighbor in grid.neighbors(&field.position()) {
                 match neighbor.cultivation.as_ref().map(|info| info.cultivation()) {
                     Some(Cultivation::Water) => score += 1,
@@ -651,7 +648,7 @@ impl Objective for PfadDesWaldes {
         for (forest_id, _) in grid.area_ids(Cultivation::Forest) {
             let mut neighbor_mountains = grid
                 .area_neighbors(forest_id)
-                .filter(|f| f.terrain() == Terrain::Mountain)
+                .filter(|f| f.terrain().is_mountain())
                 // mountains can occur more than once as neighbors of an area
                 // however, as soon as there are two different mountains we set all to true anyway
                 // so we do not need to sort before dedup()

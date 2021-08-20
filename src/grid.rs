@@ -11,7 +11,6 @@ use serde::Deserialize;
 use std::cmp::{min, Ordering};
 use std::collections::VecDeque;
 use std::ops::{Add, RangeFrom};
-use std::usize;
 
 const SPRITE_SIZE: f32 = 75.;
 const GRID_SIZE: usize = 11;
@@ -91,9 +90,16 @@ impl AssetID for Cultivation {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Terrain {
     Normal,
-    Mountain,
+    Mountain(bool), // stores whether coin is already collected
     Ruin,
 }
+
+impl Terrain {
+    pub fn is_mountain(&self) -> bool {
+        matches!(self, Self::Mountain(_))
+    }
+}
+
 impl Default for Terrain {
     fn default() -> Self {
         Terrain::Normal
@@ -103,7 +109,7 @@ impl Default for Terrain {
 impl AssetID for Terrain {
     fn asset_id(&self) -> &'static str {
         match self {
-            Terrain::Mountain => "mountain",
+            Terrain::Mountain(_) => "mountain",
             Terrain::Normal => "default",
             Terrain::Ruin => "ruin",
         }
@@ -163,7 +169,7 @@ impl Field {
     }
 
     pub fn is_free(&self) -> bool {
-        self.terrain != Terrain::Mountain && self.cultivation.is_none()
+        !self.terrain.is_mountain() && self.cultivation.is_none()
     }
 }
 
@@ -279,6 +285,28 @@ impl Grid {
         AreaID(self.area_counter.next().unwrap())
     }
 
+    pub fn mountain_coins(&mut self) -> Vec<Coordinate> {
+        let mut result = Vec::default();
+
+        for coord in self
+            .mountains()
+            .map(|mountain| mountain.position())
+            .collect::<Vec<_>>()
+        {
+            if self.neighbors(&coord).any(|n| n.is_free()) {
+                continue;
+            }
+
+            let field = self.at_mut(&coord).unwrap();
+            if let Terrain::Mountain(ref mut coin @ true) = field.terrain {
+                *coin = false;
+                result.push(coord);
+            }
+        }
+
+        result
+    }
+
     fn cultivate(
         &mut self,
         shape: &Shape,
@@ -343,7 +371,7 @@ impl Grid {
     }
 
     pub fn mountains(&self) -> impl Iterator<Item = &Field> {
-        self.all().filter(|&f| f.terrain() == Terrain::Mountain)
+        self.all().filter(|&f| f.terrain().is_mountain())
     }
 
     pub fn ruins(&self) -> impl Iterator<Item = &Field> {
@@ -434,7 +462,7 @@ impl Grid {
         };
 
         for pos in mountains.iter() {
-            grid.inner[grid.index(pos).unwrap()].terrain = Terrain::Mountain;
+            grid.inner[grid.index(pos).unwrap()].terrain = Terrain::Mountain(true);
         }
 
         for pos in ruins.iter() {

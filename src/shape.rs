@@ -98,7 +98,7 @@ impl Shape {
             geometry: g.clone(),
             cultivation: *cult,
             ruin: *ruin,
-            coin: coin,
+            coin,
         }
     }
 
@@ -275,11 +275,10 @@ pub fn place_shape(
                         log::info!("coin was added");
                     }
 
-                    /* if mountain was enclosed {
-                        objectives.add_coin(/* add mountain coord */)
+                    for _ in grid.mountain_coins() {
+                        objectives.add_coin();
+                        log::info!("mountain coin was added");
                     }
-
-                    */
 
                     com.entity(t_entity).despawn_recursive();
                     if let Ok((card_entity, _)) = card.single() {
