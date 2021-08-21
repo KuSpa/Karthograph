@@ -54,7 +54,7 @@ impl GameObjectives {
     pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
         (
             &*self.objectives[Self::idx(season)],
-            &*self.objectives[(Self::idx(season) + 1) % 3],
+            &*self.objectives[(Self::idx(season) + 1) % 4],
         )
     }
 
