@@ -272,10 +272,10 @@ impl Grid {
         coord: &Coordinate,
         assets: &AssetManager,
         mut handles: &mut Query<&mut Handle<ColorMaterial>>,
-    ) -> Result<(), &'static str> {
+    ) -> Result<Vec<Coordinate>, &'static str> {
         if self.accepts_geometry_at(shape.geometry(), coord, &shape.ruin()) {
             self.cultivate(shape, coord, assets, &mut handles);
-            Ok(())
+            Ok(shape.geometry().iter().map(|pos| *pos + *coord).collect())
         } else {
             Err("Can't place the shape here")
         }

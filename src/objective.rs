@@ -48,7 +48,7 @@ pub trait Objective: AssetID {
 pub struct GameObjectives {
     objectives: [Box<dyn Objective + Send + Sync>; 4],
     scores: [Option<SeasonScore>; 4],
-    current_coins: usize,
+    current_coins: Vec<Vec<Coordinate>>,
 }
 impl GameObjectives {
     pub fn objectives_for_season(&self, season: &SeasonType) -> (&dyn Objective, &dyn Objective) {
@@ -67,8 +67,8 @@ impl GameObjectives {
         }
     }
 
-    pub fn add_coin(&mut self) {
-        self.current_coins += 1;
+    pub fn add_coin(&mut self, position: Vec<Coordinate>) {
+        self.current_coins.push(position);
     }
 
     pub fn score_season(&mut self, season: &SeasonType, grid: &Grid) -> &SeasonScore {
@@ -78,7 +78,7 @@ impl GameObjectives {
             self.scores[idx] = Some(SeasonScore {
                 a: (first.name(), first.score(grid)),
                 b: (second.name(), second.score(grid)),
-                coin_count: self.current_coins,
+                coin_count: self.current_coins.len(),
             });
         }
 

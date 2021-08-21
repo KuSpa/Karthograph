@@ -122,7 +122,7 @@ fn setup_season_ui(
         text: Text {
             sections: vec![
                 TextSection {
-                    value: "coins".to_string(),
+                    value: "Coins".to_string(),
                     style: text_style.clone(),
                 },
                 TextSection {

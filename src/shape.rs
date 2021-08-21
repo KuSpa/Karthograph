@@ -267,16 +267,18 @@ pub fn place_shape(
             if let Ok((t_entity, shape, transform)) = shapes.single() {
                 let position = Vec2::new(transform.translation.x, transform.translation.y);
                 let grid_position = Grid::screen_to_grid(position);
-                if let Ok(()) = grid.try_cultivate(shape, &grid_position, &assets, &mut handles) {
+                if let Ok(coordinates) =
+                    grid.try_cultivate(shape, &grid_position, &assets, &mut handles)
+                {
                     // the magic happens in try_cultivate, if this is successful, all thats left to do is to despawn the shape and the card
 
                     if shape.coin {
-                        objectives.add_coin(/* add coords of shape here */);
+                        objectives.add_coin(coordinates);
                         log::info!("coin was added");
                     }
 
-                    for _ in grid.mountain_coins() {
-                        objectives.add_coin();
+                    for coord in grid.mountain_coins() {
+                        objectives.add_coin(vec![coord]);
                         log::info!("mountain coin was added");
                     }
 
