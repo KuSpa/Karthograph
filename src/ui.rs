@@ -2,6 +2,16 @@ use bevy::prelude::*;
 
 use crate::{asset_management::AssetManager, objective::GameObjectives, seasons::SeasonType};
 
+pub const D_COLOR: ColorMaterial = ColorMaterial {
+    color: Color::SEA_GREEN,
+    texture: None,
+};
+
+pub const H_COLOR: ColorMaterial = ColorMaterial {
+    color: Color::SALMON,
+    texture: None,
+};
+
 pub fn setup_ui(mut com: Commands) {
     com.spawn_bundle(UiCameraBundle::default());
 }
@@ -59,6 +69,8 @@ pub fn setup_objective_ui(
     com.insert_resource(objectives);
 }
 
+pub struct SeasonUiMarker;
+
 fn setup_season_ui(
     child_builder: &mut ChildBuilder,
     season: SeasonType,
@@ -71,6 +83,12 @@ fn setup_season_ui(
         font: assets.font.clone(),
         font_size: 60.0,
         color: Color::BLACK,
+    };
+
+    let color = if season == SeasonType::Spring {
+        H_COLOR
+    } else {
+        D_COLOR
     };
 
     // first objective
@@ -146,7 +164,7 @@ fn setup_season_ui(
                 align_content: AlignContent::SpaceBetween,
                 ..Default::default()
             },
-            material: materials.add(Color::rgba(0.0, 0.8, 0.65, 0.5).into()),
+            material: materials.add(color),
 
             ..Default::default()
         })
@@ -155,5 +173,7 @@ fn setup_season_ui(
             parent.spawn_bundle(second_objective).insert(marker);
             parent.spawn_bundle(first_objective).insert(marker);
             parent.spawn_bundle(season_name);
-        });
+        })
+        .insert(marker)
+        .insert(SeasonUiMarker);
 }

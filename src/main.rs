@@ -6,7 +6,7 @@ use card_pile::*;
 use grid::*;
 use mouse::*;
 use objective::GameObjectives;
-use seasons::{end_scoring, score_season, Season};
+use seasons::{advance_season, score_season, Season};
 use shape::*;
 use std::usize;
 use ui::{setup_objective_ui, setup_ui};
@@ -68,7 +68,7 @@ fn main() {
             SystemSet::on_enter(GameState::SeasonScoreState).with_system(score_season.system()),
         )
         .add_system_set(
-            SystemSet::on_exit(GameState::SeasonScoreState).with_system(end_scoring.system()),
+            SystemSet::on_exit(GameState::SeasonScoreState).with_system(advance_season.system()),
         )
         /*.add_system(
             spawn_shape

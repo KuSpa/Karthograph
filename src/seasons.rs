@@ -1,11 +1,10 @@
-use bevy::{
-    prelude::{Query, Res, ResMut, State},
-    text::Text,
-};
+use bevy::{prelude::*, text::Text};
 
+use crate::ui;
 use crate::{
     grid::Grid,
     objective::{GameObjectives, SeasonScore},
+    ui::SeasonUiMarker,
     GameState,
 };
 
@@ -35,7 +34,7 @@ impl Season {
         &self.season_type
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum SeasonType {
     Spring,
     Summer,
@@ -78,7 +77,7 @@ impl Default for SeasonType {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum SeasonMarker {
     Spring,
     Summer,
@@ -122,11 +121,30 @@ pub fn score_season(
     state.pop().unwrap();
 }
 
-pub fn end_scoring(mut season: ResMut<Season>, mut state: ResMut<State<GameState>>) {
+pub fn advance_season(
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query: Query<(&SeasonMarker, &mut Handle<ColorMaterial>), With<SeasonUiMarker>>,
+    mut season: ResMut<Season>,
+    mut state: ResMut<State<GameState>>,
+) {
+    for (marker, mut handle) in query.iter_mut() {
+        if *marker == season.season_type().marker() {
+            // reset old season
+            *handle = materials.add(ui::D_COLOR);
+        }
+    }
+
     if let Some(next_season) = season.next() {
         *season = next_season;
     } else {
         state.overwrite_set(GameState::End).unwrap();
         panic!("GAME SHOULD END DON'T YOU THINK?")
+    }
+
+    for (marker, mut handle) in query.iter_mut() {
+        if *marker == season.season_type().marker() {
+            // set new season
+            *handle = materials.add(ui::H_COLOR);
+        }
     }
 }
