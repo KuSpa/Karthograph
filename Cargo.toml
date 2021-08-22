@@ -1,16 +1,2 @@
-[package]
-name = "karthograph"
-version = "0.1.0"
-authors = ["KuSpa <wil.friedemann@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-bevy = { version = "0.5.0", features = ["dynamic"] }
-anyhow = "1.0"
-rand = "0.8.0"
-ron = "0.6.2"
-serde = {version = "1", features = ["derive"]}
-derive_deref= "1.1.1"
-itertools = "0.10.1"
+[workspace]
+members = ["karthograph_client", "karthograph_server", "karthograph_core"]

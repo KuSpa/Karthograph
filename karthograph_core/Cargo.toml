@@ -1,5 +1,5 @@
 [package]
-name = "karthograph_server"
+name = "karthograph_core"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,5 +7,9 @@ edition = "2018"
 
 [dependencies]
 bevy = { version = "0.5.0", features = ["dynamic"] }
-bevy_spicy_networking = "0.6.0"
-karthograph_core = {path = "../karthograph_core"}
+anyhow = "1.0"
+rand = "0.8.0"
+ron = "0.6.2"
+serde = {version = "1", features = ["derive"]}
+derive_deref= "1.1.1"
+itertools = "0.10.1"

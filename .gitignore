@@ -37,4 +37,4 @@ Cargo.lock
 # End of https://www.toptal.com/developers/gitignore/api/rust,visualstudiocode
 
 ### =========
-assets/font.ttf
+karthograph_client/assets/font.ttf
