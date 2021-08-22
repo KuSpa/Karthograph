@@ -17,9 +17,16 @@ const ASSETS: [(&str, &str); 10] = [
 ];
 
 #[derive(Default)]
+pub struct UIAssets {
+    pub default: Handle<ColorMaterial>,
+    pub highlighted: Handle<ColorMaterial>,
+}
+
+#[derive(Default)]
 pub struct AssetManager {
     map: HashMap<&'static str, Handle<ColorMaterial>>,
     pub cards: Handle<CardPile>,
+    pub ui: UIAssets,
     pub font: Handle<Font>,
 }
 impl AssetManager {
@@ -41,6 +48,8 @@ impl AssetManager {
         }
         self.cards = asset_server.load("content.cardpile");
         self.font = asset_server.load("font.ttf");
+        self.ui.default = materials.add(Color::SEA_GREEN.into());
+        self.ui.highlighted = materials.add(Color::SALMON.into());
     }
 
     fn is_loaded(

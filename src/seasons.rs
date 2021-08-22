@@ -1,6 +1,6 @@
 use bevy::{prelude::*, text::Text};
 
-use crate::ui;
+use crate::asset_management::AssetManager;
 use crate::{
     grid::Grid,
     objective::{GameObjectives, SeasonScore},
@@ -122,7 +122,7 @@ pub fn score_season(
 }
 
 pub fn advance_season(
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    assets: Res<AssetManager>,
     mut query: Query<(&SeasonMarker, &mut Handle<ColorMaterial>), With<SeasonUiMarker>>,
     mut season: ResMut<Season>,
     mut state: ResMut<State<GameState>>,
@@ -130,7 +130,7 @@ pub fn advance_season(
     for (marker, mut handle) in query.iter_mut() {
         if *marker == season.season_type().marker() {
             // reset old season
-            *handle = materials.add(ui::D_COLOR);
+            *handle = assets.ui.default.clone();
         }
     }
 
@@ -144,7 +144,7 @@ pub fn advance_season(
     for (marker, mut handle) in query.iter_mut() {
         if *marker == season.season_type().marker() {
             // set new season
-            *handle = materials.add(ui::H_COLOR);
+            *handle = assets.ui.highlighted.clone();
         }
     }
 }

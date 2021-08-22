@@ -2,27 +2,16 @@ use bevy::prelude::*;
 
 use crate::{asset_management::AssetManager, objective::GameObjectives, seasons::SeasonType};
 
-pub const D_COLOR: ColorMaterial = ColorMaterial {
-    color: Color::SEA_GREEN,
-    texture: None,
-};
-
-pub const H_COLOR: ColorMaterial = ColorMaterial {
-    color: Color::SALMON,
-    texture: None,
-};
-
 pub fn setup_ui(mut com: Commands) {
     com.spawn_bundle(UiCameraBundle::default());
 }
 
 pub fn setup_objective_ui(
     mut com: Commands,
+    objectives: Res<GameObjectives>, // If they are not yet initialized, Bevy will handle this for us
     assets: Res<AssetManager>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let objectives = GameObjectives::default();
-    // TODO BRING THIS SOMEWHERE ELSE
     com.spawn_bundle(NodeBundle {
         style: Style {
             size: Size::new(Val::Percent(25.0), Val::Percent(100.0)),
@@ -37,36 +26,11 @@ pub fn setup_objective_ui(
         ..Default::default()
     })
     .with_children(|mut parent| {
-        setup_season_ui(
-            &mut parent,
-            SeasonType::Winter,
-            &assets,
-            &mut materials,
-            &objectives,
-        );
-        setup_season_ui(
-            &mut parent,
-            SeasonType::Autumn,
-            &assets,
-            &mut materials,
-            &objectives,
-        );
-        setup_season_ui(
-            &mut parent,
-            SeasonType::Summer,
-            &assets,
-            &mut materials,
-            &objectives,
-        );
-        setup_season_ui(
-            &mut parent,
-            SeasonType::Spring,
-            &assets,
-            &mut materials,
-            &objectives,
-        );
+        setup_season_ui(&mut parent, SeasonType::Winter, &assets, &objectives);
+        setup_season_ui(&mut parent, SeasonType::Autumn, &assets, &objectives);
+        setup_season_ui(&mut parent, SeasonType::Summer, &assets, &objectives);
+        setup_season_ui(&mut parent, SeasonType::Spring, &assets, &objectives);
     });
-    com.insert_resource(objectives);
 }
 
 pub struct SeasonUiMarker;
@@ -75,7 +39,6 @@ fn setup_season_ui(
     child_builder: &mut ChildBuilder,
     season: SeasonType,
     assets: &Res<AssetManager>,
-    materials: &mut Assets<ColorMaterial>,
     objectives: &GameObjectives,
 ) {
     // one line as name and then two lines for both objectives
@@ -86,9 +49,9 @@ fn setup_season_ui(
     };
 
     let color = if season == SeasonType::Spring {
-        H_COLOR
+        assets.ui.highlighted.clone()
     } else {
-        D_COLOR
+        assets.ui.default.clone()
     };
 
     // first objective
@@ -164,7 +127,7 @@ fn setup_season_ui(
                 align_content: AlignContent::SpaceBetween,
                 ..Default::default()
             },
-            material: materials.add(color),
+            material: color,
 
             ..Default::default()
         })

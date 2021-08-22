@@ -210,7 +210,7 @@ impl ShapeDefinition {
             com.spawn()
                 .insert_bundle(SpriteBundle {
                     sprite: Sprite::new(Vec2::new(50., 50.)),
-                    material: coin_handle.clone(),
+                    material: coin_handle,
                     transform: coin_transform,
                     ..Default::default()
                 })
