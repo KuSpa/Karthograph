@@ -1,34 +1,8 @@
-use asset_management::{check_readiness, init_assets, AssetManager};
 use bevy::prelude::*;
-use bevy::render::camera::WindowOrigin;
-use card::{click_card, RuinIndicator};
-use card_pile::*;
-use grid::*;
-use mouse::*;
-use objective::GameObjectives;
-use seasons::{advance_season, score_season, Season};
-use shape::*;
-use std::usize;
-use ui::{setup_objective_ui, setup_ui};
-
-mod asset_management;
-mod card;
-mod card_pile;
-mod grid;
-mod mouse;
-mod objective;
-mod seasons;
-mod shape;
-mod ui;
-mod util;
-
-pub const SPRITE_SIZE: f32 = 75.;
-pub const GRID_SIZE: usize = 11;
-//x=y offset
-pub const GRID_OFFSET: f32 = SPRITE_SIZE;
+use karthograph_core::*;
 
 fn main() {
-    App::build()
+     App::build()
         .insert_resource(AssetManager::default())
         .add_event::<NewCard>()
         .insert_resource(GameObjectives::default())
@@ -76,18 +50,4 @@ fn main() {
                 .config(|params| params.2 = Some(Timer::new(Duration::from_secs_f32(0.1), false))),
         )*/
         .run();
-}
-
-fn init_camera(mut com: Commands) {
-    let mut bundle = OrthographicCameraBundle::new_2d();
-    bundle.orthographic_projection.window_origin = WindowOrigin::BottomLeft;
-    com.spawn_bundle(bundle);
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum GameState {
-    Loading,
-    SeasonState,
-    SeasonScoreState,
-    End,
 }
