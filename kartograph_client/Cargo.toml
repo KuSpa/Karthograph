@@ -1,0 +1,13 @@
+[package]
+name = "kartograph_client"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy", branch="main", features = ["dynamic"] }
+kartograph_core = {path = "../kartograph_core"}
+bevy_spicy_networking = { git = "https://github.com/KuSpa/bevy_spicy_networking", branch="json"}
+derive_deref = "1.1.1"
+serde = {version = "1.0.63", features = ["derive"]}

@@ -1,0 +1,87 @@
+CardPile(
+	cards: [
+		//Splinter, //Splitterland
+		Ruin,//Verfallener Außenposten
+		//Ruin,//Tempelruinen
+		Cultivation(
+			geometry:Geometry([Coordinate((0,-2)),Coordinate((0,-1)),Coordinate((0,0)),Coordinate((1,0)), Coordinate((2,0))]),
+			left: Farm,
+			right: Water
+			//time:2
+
+		),
+		Shape(//Vergessener Wald
+			
+			cultivation:Forest,
+			left: Geometry([Coordinate((0,0)),Coordinate((1,1))]),//coin
+			right: Geometry([Coordinate((0,1)),Coordinate((0,0)),Coordinate((1,0)), Coordinate((1,-1))]),
+
+			//time:1
+		),
+		Cultivation(//Obsthain
+			
+			geometry:Geometry([Coordinate((-2,0)),Coordinate((-1,0)),Coordinate((0,0)),Coordinate((0,-1))]),
+			left: Forest,
+			right: Farm
+			//time:2
+
+		),
+		Shape(//Großer Strom
+			
+			cultivation:Water,
+			left: Geometry([Coordinate((0,0)),Coordinate((0,1)), Coordinate((0,-1))]),//coin
+			right: Geometry([Coordinate((-1,-1)),Coordinate((0,-1)),Coordinate((0,0)), Coordinate((1,0)), Coordinate((1,1))]),
+			//time:1
+
+		),
+		Cultivation(//Fischerdorf
+			
+			geometry:Geometry([Coordinate((-1,0)),Coordinate((0,0)),Coordinate((1,0)),Coordinate((2,0))]),
+			left: Village,
+			right: Water
+			//time:2
+
+		),
+		Cultivation(//Sumpf
+			
+			geometry:Geometry([Coordinate((0,-1)),Coordinate((0,1)),Coordinate((0,0)),Coordinate((1,0)), Coordinate((2,0))]),
+			left: Forest,
+			right: Water
+			//time:2
+
+		),
+		Shape(//Ackerland
+			
+			cultivation:Farm,
+			left: Geometry([Coordinate((0,0)),Coordinate((0,1))]),//coin
+			right: Geometry([Coordinate((1,0)),Coordinate((0,-1)),Coordinate((-1,0)), Coordinate((0,0)), Coordinate((0,1))]),
+			//time:1
+
+		),
+		Shape(//Weiler
+			
+			cultivation:Village,
+			left: Geometry([Coordinate((0,0)),Coordinate((1,0)), Coordinate((0,1))]),//coin
+			right: Geometry([Coordinate((-1,-1)),Coordinate((0,-1)),Coordinate((-1,0)), Coordinate((0,0)), Coordinate((1,0))]),
+			//time:1
+
+		),
+		Cultivation(//Gehöft
+			
+			geometry:Geometry([Coordinate((0,-1)),Coordinate((0,0)),Coordinate((1,0)),Coordinate((0,1))]),
+			left: Village,
+			right: Farm
+			//time:2
+
+		),
+		Cultivation(//Baumwipfeldorf
+			
+			geometry:Geometry([Coordinate((-2,0)),Coordinate((-1,0)),Coordinate((0,0)),Coordinate((0,1)),Coordinate((1,1))]),
+			left: Forest,
+			right: Village
+			//time:2
+
+		),
+		
+	]
+)

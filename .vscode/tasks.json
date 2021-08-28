@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cargo",
+			"command": "build",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "rust: cargo build"
+		},
+		{
+			"type": "cargo",
+			"command": "run",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": ["--package", "kartograph_server"],
+			"group": "build",
+			"label": "rust: cargo run server"
+		},{
+			"type": "cargo",
+			"command": "run",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": ["--package", "kartograph_client"],
+			"group": "build",
+			"label": "rust: cargo run client"
+		}
+	]
+}
