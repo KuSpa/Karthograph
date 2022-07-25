@@ -5,7 +5,7 @@ use crate::state::ServerGameState;
 use crate::state::{PlayerState, Players};
 use bevy::prelude::*;
 use bevy_spicy_networking::{NetworkData, NetworkServer, ServerNetworkEvent, ServerPlugin};
-use kartograph_core::network::{server_register_network_messages, ConnectGrid, ConnectPlayerName};
+use common::network::{server_register_network_messages, ConnectGrid, ConnectPlayerName};
 pub struct GameSetupPlugin;
 
 impl Plugin for GameSetupPlugin {
@@ -44,7 +44,7 @@ impl Plugin for NetworkPlugin {
 }
 
 fn setup_networking(mut net: ResMut<NetworkServer>) {
-    let ip_addr = "127.0.0.1".parse().unwrap();
+    let ip_addr = "0.0.0.0".parse().unwrap();
     let socket_addr = SocketAddr::new(ip_addr, 9999);
     match net.listen(socket_addr) {
         Ok(_) => info!("Started Socket"),

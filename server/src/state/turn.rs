@@ -4,9 +4,9 @@ use crate::state::season::Season;
 use crate::{cards::CardPile, state::ServerGameState};
 use bevy::prelude::*;
 use bevy_spicy_networking::{NetworkData, NetworkServer};
-use kartograph_core::card::Card;
-use kartograph_core::grid::{GridLike, Shape};
-use kartograph_core::network::{CCommand, CultivationCommand};
+use common::card::Card;
+use common::grid::{GridLike, Shape};
+use common::network::{CCommand, CultivationCommand};
 
 use super::{PlayerState, Players};
 
@@ -41,7 +41,7 @@ fn new_card(
     }
 
     let card = cards.cards.pop().unwrap();
-    info!("Draw card - {:?}", &card);
+    info!("Draw a card");
     match card {
         Card::Cultivation { .. } => season.pass_time(2),
         Card::Shape { .. } => season.pass_time(1),
@@ -110,5 +110,4 @@ fn end_turn(players: Res<Players>, mut state: ResMut<State<ServerGameState>>) {
     if players.all_ready() {
         state.pop().unwrap();
     }
-    //todo!()
 }

@@ -2,6 +2,7 @@ mod asset_management;
 mod network;
 mod phases;
 mod shape;
+mod ui;
 
 use std::convert::TryFrom;
 
@@ -10,11 +11,12 @@ use bevy::{math::Vec2, window::CursorMoved};
 use asset_management::{AssetID, AssetManager, AssetPlugin};
 use bevy::{prelude::*, render::camera::WindowOrigin};
 use derive_deref::*;
-use kartograph_core::grid::{Coordinate, Field, GridLike, GRID_SIZE};
-use kartograph_core::network::CultivationCommand;
-use kartograph_core::util::to_array;
+use common::grid::{Coordinate, Field, GridLike, GRID_SIZE};
+use common::network::CultivationCommand;
+use common::util::to_array;
 use network::ClientNetworkPlugin;
 use phases::ActivePhasePlugin;
+use ui::CustomUIPlugin;
 
 fn main() {
     App::new()
@@ -22,6 +24,7 @@ fn main() {
         .add_plugin(ClientNetworkPlugin)
         .add_plugin(AssetPlugin)
         .add_plugin(ActivePhasePlugin)
+        .add_plugin(CustomUIPlugin)
         .add_startup_system(init_camera.system())
         .insert_resource(MousePosition::default())
         .add_system(mouse_position.system())
@@ -54,7 +57,7 @@ fn main() {
             .with_system(click_card.system()),
     )
     .add_system_set(
-        SystemSet::on_enter(GameState::SeasonScoreState).with_system(score_season.system()),
+        SystemSet::on_enter(GameState::SeasonScommonState).with_system(score_season.system()),
     )
     .add_system_set(
         SystemSet::on_exit(GameState::SeasonScoreState).with_system(advance_season.system()),
@@ -77,6 +80,12 @@ pub(crate) enum ClientGameState {
     ActiveTurn,
     Waiting,
     Scoring,
+}
+
+impl Default for ClientGameState{
+    fn default() -> Self {
+        Self::Loading
+    }
 }
 
 fn init_camera(mut com: Commands) {

@@ -4,7 +4,7 @@ use bevy::{
     prelude::Plugin,
 };
 use bevy_spicy_networking::NetworkClient;
-use kartograph_core::{
+use common::{
     card::{Card, Choice, Rotation},
     grid::{Coordinate, Cultivation, Geometry, GridLike, Shape},
     network::CCommand,
@@ -271,7 +271,6 @@ fn drop_shape(
                     rotation: act.rotation,
                 })
                 .unwrap();
-                info!("{:?} - set to waiting", state.current());
                 state.pop().unwrap();
             }
         }

@@ -1,2 +1,2 @@
 [workspace]
-members = ["kartograph_client", "kartograph_core", "kartograph_server"]
+members = ["client", "common", "server"]

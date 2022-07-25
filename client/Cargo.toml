@@ -1,5 +1,5 @@
 [package]
-name = "kartograph_client"
+name = "client"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch="main", features = ["dynamic"] }
-kartograph_core = {path = "../kartograph_core"}
+common = {path = "../common"}
 bevy_spicy_networking = { git = "https://github.com/KuSpa/bevy_spicy_networking", branch="json"}
 derive_deref = "1.1.1"
 serde = {version = "1.0.63", features = ["derive"]}

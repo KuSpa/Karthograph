@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy_spicy_networking::*;
-use kartograph_core::card::Card;
-use kartograph_core::grid::{Field, Shape};
-use kartograph_core::network::*;
+use common::card::Card;
+use common::grid::{Field, Shape};
+use common::network::*;
 use std::net::SocketAddr;
 
 use crate::asset_management::AssetManager;

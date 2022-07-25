@@ -16,7 +16,7 @@
 			"problemMatcher": [
 				"$rustc"
 			],
-			"args": ["--package", "kartograph_server"],
+			"args": ["--package", "server"],
 			"group": "build",
 			"label": "rust: cargo run server"
 		},{
@@ -25,7 +25,7 @@
 			"problemMatcher": [
 				"$rustc"
 			],
-			"args": ["--package", "kartograph_client"],
+			"args": ["--package", "client"],
 			"group": "build",
 			"label": "rust: cargo run client"
 		}

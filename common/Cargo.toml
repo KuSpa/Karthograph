@@ -1,5 +1,5 @@
 [package]
-name = "kartograph_server"
+name = "common"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,12 +7,11 @@ edition = "2018"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch="main", features = ["dynamic"] }
-bevy_spicy_networking = { git = "https://github.com/KuSpa/bevy_spicy_networking", branch="json"}
-kartograph_core = {path = "../kartograph_core"}
-typetag = "0.1.7"
+anyhow = "1.0"
+rand = "0.8.0"
+ron = "0.6.2"
 serde = {version = "1.0.63", features = ["derive"]}
 derive_deref= "1.1.1"
 itertools = "0.10.1"
-rand = "0.8.4"
-anyhow = "1.0.43"
-ron = "0.6.2"
+typetag = "0.1.7"
+bevy_spicy_networking = { git = "https://github.com/KuSpa/bevy_spicy_networking", branch="json"}

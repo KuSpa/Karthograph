@@ -1,6 +1,6 @@
 use bevy::{ecs::{schedule::ShouldRun, system::Command}, input::mouse::MouseButtonInput, prelude::Plugin};
 use bevy_spicy_networking::NetworkData;
-use kartograph_core::{card::{Card, Choice, Rotation}, grid::{Coordinate, Cultivation, Geometry, Shape}, network::CultivationCommand};
+use common::{card::{Card, Choice, Rotation}, grid::{Coordinate, Cultivation, Geometry, Shape}, network::CultivationCommand};
 
 use crate::{
     asset_management::{AssetID, AssetManager},
@@ -99,7 +99,9 @@ fn handle_cultivation(
                 &assets,
                 &mut handles,
             );
-
+            // TODO Racecondition??: 
+            // If cultivation comes one tick AFTER new card was sent, this deletes new cards as well
+            // however, tcp/spicy guarantee, that both packages arrive at the same tick worst
             com.remove_resource::<ActiveShape>();
 
             for e in query.iter() {
@@ -128,7 +130,6 @@ fn handle_card(
     for card_event in network_events.iter() {
         let card: Card = (card_event as &Card).clone();
         info!("Received Card");
-        info!("{:?} push Active", state.current());
         state.push(ClientGameState::ActiveTurn).unwrap();
         com.insert_resource(card);
     }

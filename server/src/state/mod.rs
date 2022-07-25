@@ -1,7 +1,7 @@
 use crate::{cards::CardPile, grid::Grid};
 use bevy::{prelude::*, utils::HashMap};
 use bevy_spicy_networking::ConnectionId;
-use kartograph_core::SeasonType;
+use common::SeasonType;
 use serde::*;
 
 mod turn;

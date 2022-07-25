@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use kartograph_core::grid::{Cultivation, Terrain};
+use common::grid::{Cultivation, Terrain};
 use std::collections::HashMap;
 
 use crate::{CGrid, ClientGameState};
@@ -94,7 +94,6 @@ pub fn init_assets(
     asset_server: Res<AssetServer>,
     materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    info!("Loading Assets");
     asset_manager.initialize(asset_server, materials);
 }
 
@@ -106,8 +105,7 @@ fn check_readiness(
     font: Res<Assets<Font>>,
 ) {
     if assets.is_loaded(&color_mat, &font) && grid.is_some() {
-        info!("Loaded and Connected");
-        info!("{:?} - Advance to Playing", state.current());
+        info!("Advance to Playing");
         state.set(ClientGameState::Playing).unwrap();
     }
 }

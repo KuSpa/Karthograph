@@ -7,8 +7,8 @@ use std::{
 use bevy::math::{IVec2, Vec2};
 use derive_deref::*;
 use itertools::Itertools;
-use kartograph_core::grid::{Coordinate, Field, GridLike, Shape};
-use kartograph_core::grid::{Cultivation, Terrain, GRID_SIZE};
+use common::grid::{Coordinate, Field, GridLike, Shape};
+use common::grid::{Cultivation, Terrain, GRID_SIZE};
 use serde::{ser::SerializeTuple, Deserialize, Serialize, Serializer};
 
 ////////////////////////////////////////////////////////////////

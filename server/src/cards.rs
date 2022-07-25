@@ -5,7 +5,7 @@ use bevy::{
     utils::BoxedFuture,
 };
 use derive_deref::*;
-use kartograph_core::card::Card;
+use common::card::Card;
 use rand::{prelude::SliceRandom, thread_rng};
 use serde::Deserialize;
 

@@ -3,7 +3,7 @@ use crate::{
     state::ServerGameState,
 };
 use bevy::prelude::*;
-use kartograph_core::SeasonType;
+use common::SeasonType;
 
 pub struct SeasonPlugin;
 
